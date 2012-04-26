@@ -1,0 +1,8 @@
+To get metadata for a feature use @crmFeatureService.getFeature(String name)@.
+
+{code}
+def metadata = crmFeatureService.getFeature("awesome")
+assert metadata.description == "This feature is awesome"
+{code}
+
+Please consult the [crmFeatureService|Services] reference manual for a list of metadata attributes.

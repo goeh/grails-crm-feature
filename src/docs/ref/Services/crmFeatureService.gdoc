@@ -1,0 +1,74 @@
+h1. CrmFeatureService
+
+h2. Add application features
+@addApplicationFeature(Map metadata)@
+
+{code}
+def metadata = [
+    name: "awesome", description: "This feature is awesome",
+    controller: "awesome", action: "index"
+]
+crmFeatureService.addApplicationFeature(metadata)
+{code}
+
+h2. Remove a feature from the application
+@removeApplicationFeature(String name)@
+
+To remove a feature you normally disable it instead of removing it.
+If an unwanted feature is the only feature provided by a plugin, it's probably better to uninstall the plugin completely.
+But there may be occasions where you want one feature from a plugin that provides several features. In that
+case you can remove unwanted features at application startup. For example in BootStrap.groovy.
+
+{code}
+crmFeatureService.removeApplicationFeature("facebook")
+{code}
+
+h2. List application features
+@getApplicationFeatures()@
+
+To list all installed features in an application use @crmFeatureService.getApplicationFeatures()@.
+
+{code}
+List<String> installedFeatures = crmFeatureService.getApplicationFeatures()
+assert installedFeatures.contains("awesome")
+{code}
+
+This will list all installed features, even disabled features.
+
+h2. Feature Metadata
+@getFeature(String name)@
+
+To get metadata for a feature use @crmFeatureService.getFeature(String name)@.
+
+{code}
+Map metadata = crmFeatureService.getFeature("awesome")
+assert metadata.description == "This feature is awesome"
+{code}
+
+Metadata attributes
+
+{table}
+*Attribute* | *Description*
+name        | The unique name of the feature
+description | Short text that describes the feature
+enabled     | If @true@ the feature will be enabled by default, otherwise features are disabled by default.
+role        | If @enabled@ is @true@ the feature can optionally be enabled for a specific role (String)
+tenant      | If @enabled@ is @true@ the feature can optionally be enabled for a specific tenant (Long)
+info        | (recommended) Map with parameters to createLink() to access this feature's information page
+admin       | (optional) Map with parameters to createLink() to access this feature's administration page
+main        | (optional) Map with parameters to createLink() to access this feature's start page
+{table}
+
+@info, help, admin, main@ is a Map with the following properties:
+
+{table}
+*Property* | *Description*
+controller | @controller@ attribute for createLink()
+action     | (optional) @action@ attribute for createLink()
+mapping    | (optional) named URL mapping to use to rewrite the link
+params     | (optional) @params@ attribute for createLink()
+{table}
+
+{note}
+The @main@ attribute can be used to configure the navigation structure for your application.
+{note}

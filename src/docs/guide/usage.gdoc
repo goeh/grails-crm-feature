@@ -1,0 +1,9 @@
+The CRM *Feature Plugin* is part of the Grails CRM application framework. It manages installed features and
+makes it possible to enable and disable features for different user accounts.
+
+Each Grails CRM plugin can add features to an application. It does so by communicating with *CrmFeatureService* to add
+metadata about what features the plugin provides.
+
+As application developer you can enable or disable specific features provided by plugins.
+You can also let administrators browse the plugin metadata and let them decide if they
+want to enable the provided functionality.
