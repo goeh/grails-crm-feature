@@ -138,7 +138,7 @@ class CrmFeatureService {
                 }
             } else  {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expires).save(failOnError: true)
-                log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [$expires ?: 'never']")
+                log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [${expires ?: 'never'}]")
             }
         }
     }
