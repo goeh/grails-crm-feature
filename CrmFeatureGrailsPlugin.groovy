@@ -20,7 +20,7 @@ import grails.plugins.crm.feature.ClosureToMap
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "0.9.0"
+    def version = "0.9.1"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
     def loadAfter = ['controllers']

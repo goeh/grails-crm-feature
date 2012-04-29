@@ -77,7 +77,7 @@ class CrmFeatureService {
         }
         // If enabled is set the feature is enabled by default.
         if (metadata.enabled) {
-            enableFeature(name, metadata.role, metadata.tenant)
+            enableFeature(name, metadata.role, metadata.tenant, metadata.expires)
         }
     }
 
@@ -110,11 +110,12 @@ class CrmFeatureService {
      * @param feature name of feature or List of feature names to enable
      * @param role (option) enable only for a specific user role
      * @param tenant (optional) tenant ID to enable feature for a specific tenant
+     * @param expires (optional) expiration date for the feature
      * @return
      */
     @Transactional
     @CacheEvict("featureCache")
-    def enableFeature(def feature, String role = null, Long tenant = null) {
+    def enableFeature(def feature, String role = null, Long tenant = null, Date expires = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
         }
@@ -131,9 +132,13 @@ class CrmFeatureService {
                     eq('tenantId', tenant)
                 }
             }
-            if (!result) {
-                new CrmFeature(tenantId: tenant, role: role, name: f).save(failOnError: true)
-                log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant]")
+            if(result) {
+                for(r in result) {
+                    r.expires = expires
+                }
+            } else  {
+                new CrmFeature(tenantId: tenant, role: role, name: f, expires: expires).save(failOnError: true)
+                log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [$expires ?: 'never']")
             }
         }
     }
@@ -193,6 +198,10 @@ class CrmFeatureService {
             if (tenant != null) {
                 eq('tenantId', tenant)
             }
+            or {
+                isNull('expires')
+                gt('expires', new Date())
+            }
         } > 0
     }
 
@@ -213,14 +222,18 @@ class CrmFeatureService {
             inList('name', getApplicationFeatures())
             if (role != null) {
                 or {
-                    eq('role', role)
                     isNull('role')
+                    eq('role', role)
                 }
             } else {
                 isNull('role')
             }
             if (tenant != null) {
                 eq('tenantId', tenant)
+            }
+            or {
+                isNull('expires')
+                gt('expires', new Date())
             }
         }
     }

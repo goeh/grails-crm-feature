@@ -58,8 +58,8 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
     def "Install a feature and make it enabled by default"() {
         when:
         crmFeatureService.addApplicationFeature([name: "test1", description: "Test Feature 1"])
-        crmFeatureService.addApplicationFeature([name: "test2", description: "Test Feature 2", enabled:false])
-        crmFeatureService.addApplicationFeature([name: "standard", description: "A standard feature enabled by default", enabled:true])
+        crmFeatureService.addApplicationFeature([name: "test2", description: "Test Feature 2", enabled: false])
+        crmFeatureService.addApplicationFeature([name: "standard", description: "A standard feature enabled by default", enabled: true])
         then:
         crmFeatureService.getApplicationFeatures().size() == 3
         !crmFeatureService.hasFeature("test1")
@@ -126,5 +126,24 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.hasFeature("awesome") == true
         crmFeatureService.hasFeature("admin") == false
         crmFeatureService.hasFeature("admin", "admin") == true
+    }
+
+    def "feature expiration"() {
+
+        when:
+        crmFeatureService.addApplicationFeature([name: "basic", description: "Basic Feature", enabled: true, expires: new Date() + 30])
+        crmFeatureService.addApplicationFeature([name: "advanced", description: "Advanced Feature", enabled: true, expires: new Date() + 1])
+        crmFeatureService.addApplicationFeature([name: "legacy", description: "Legacy Feature", enabled: true, expires: new Date() - 1])
+
+        then:
+        crmFeatureService.hasFeature("basic")
+        crmFeatureService.hasFeature("advanced")
+        !crmFeatureService.hasFeature("legacy") // Expired yesterday
+
+        when:
+        crmFeatureService.enableFeature("legacy", null, null, new Date() + 7)
+
+        then:
+        crmFeatureService.hasFeature("legacy") // We gave it one more week above
     }
 }

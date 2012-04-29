@@ -22,11 +22,14 @@ class CrmFeature {
     String name
     String role
     Long tenantId
+    Date dateCreated
+    Date expires
 
     static constraints = {
         name(maxSize:80, blank:false, unique:['tenantId', 'role'])
         role(maxSize:80, nullable:true, unique:['tenantId', 'name'])
         tenantId(nullable:true)
+        expires(nullable:true)
     }
 
     static mapping = {
