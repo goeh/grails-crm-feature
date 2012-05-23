@@ -17,6 +17,8 @@
 
 package grails.plugins.crm.feature
 
+import grails.plugins.crm.core.TenantUtils
+
 class CrmFeatureTagLib {
 
     static namespace = "crm"
@@ -40,6 +42,18 @@ class CrmFeatureTagLib {
             out << g.link(linkParams, bodyText)
         } else {
             out << bodyText
+        }
+    }
+
+    def hasFeature = {attrs, body->
+        def f = attrs.feature
+        if (!f) {
+            throwTagError("Tag [hasFeature] is missing required attribute [feature]")
+        }
+        def role = attrs.role ?: null
+        def tenant = attrs.tenant ?: TenantUtils.tenant
+        if(crmFeatureService.hasFeature(f, role, tenant)) {
+            out << body()
         }
     }
 }

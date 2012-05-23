@@ -20,7 +20,7 @@ import grails.plugins.crm.feature.ClosureToMap
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "0.9.1"
+    def version = "0.9.2"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
     def loadAfter = ['controllers']
@@ -36,17 +36,8 @@ A feature is a unit of functionality that can be enabled or disabled per user ac
     def documentation = "http://grails.org/plugin/crm-feature"
     def license = "APACHE"
     def organization = [name: "Technipelago AB", url: "http://www.technipelago.se/"]
-    def issueManagement = [system: "GITHUB", url: "https://github.com/goeh/grails-crm-feature/issues"]
+    def issueManagement = [system: "github", url: "https://github.com/goeh/grails-crm-feature/issues"]
     def scm = [url: "https://github.com/goeh/grails-crm-feature"]
-
-    def doWithWebDescriptor = { xml ->
-    }
-
-    def doWithSpring = {
-    }
-
-    def doWithDynamicMethods = { ctx ->
-    }
 
     def doWithApplicationContext = { applicationContext ->
 
@@ -71,15 +62,6 @@ A feature is a unit of functionality that can be enabled or disabled per user ac
             }
         }
 
-    }
-
-    def onChange = { event ->
-    }
-
-    def onConfigChange = { event ->
-    }
-
-    def onShutdown = { event ->
     }
 
 }
