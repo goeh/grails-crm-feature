@@ -17,10 +17,8 @@
 
 package grails.plugins.crm.feature
 
-import org.springframework.transaction.annotation.Transactional
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.cache.annotation.Cacheable
-import org.springframework.cache.annotation.CacheEvict
+import grails.plugin.cache.CacheEvict
+import grails.plugin.cache.Cacheable
 
 /**
  * This service manages available features in a running application instance.
@@ -30,7 +28,7 @@ import org.springframework.cache.annotation.CacheEvict
  */
 class CrmFeatureService {
 
-    static transactional = false
+    static transactional = true
 
     private static final Map featureMap = [:]
 
@@ -99,7 +97,6 @@ class CrmFeatureService {
      * @param name name of feature
      * @return a Map with feature metadata
      */
-    @Cacheable("featureCache")
     Map getFeature(String name) {
         featureMap[name]
     }
@@ -113,8 +110,7 @@ class CrmFeatureService {
      * @param expires (optional) expiration date for the feature
      * @return
      */
-    @Transactional
-    @CacheEvict("featureCache")
+    @CacheEvict(value="features", allEntries=true)
     def enableFeature(def feature, String role = null, Long tenant = null, Date expires = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
@@ -151,8 +147,7 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID to disable feature for a specific tenant
      * @return
      */
-    @Transactional
-    @CacheEvict("featureCache")
+    @CacheEvict(value="features", allEntries=true)
     def disableFeature(def feature, String role = null, Long tenant = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
@@ -183,7 +178,7 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID to check feature for a specific tenant
      * @return true if the feature is enabled
      */
-    @Transactional(propagation = Propagation.SUPPORTS)
+    @Cacheable("features")
     boolean hasFeature(String feature, String role = null, Long tenant = null) {
         CrmFeature.createCriteria().count {
             eq('name', feature)
@@ -212,8 +207,7 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID
      * @return List of enabled feature names
      */
-    @Cacheable("featureCache")
-    @Transactional(propagation = Propagation.SUPPORTS)
+    @Cacheable("features")
     List<String> getFeatures(String role = null, Long tenant = null) {
         CrmFeature.withCriteria {
             projections {

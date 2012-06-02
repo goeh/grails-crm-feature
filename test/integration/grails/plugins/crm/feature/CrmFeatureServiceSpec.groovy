@@ -17,6 +17,8 @@
 
 package grails.plugins.crm.feature
 
+import grails.plugins.crm.core.ClosureToMap
+
 /**
  * Tests for CrmFeatureService
  */
@@ -26,6 +28,36 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
 
     def setup() {
         crmFeatureService.removeAllFeatures()
+    }
+
+    def "feature declaration"() {
+        // Add features the same way CrmFeatureGrailsPlugin does it.
+        given:
+        def closure = {
+            test {
+                description "Integration Test"
+                main controller: "test", action: "index"
+                permissions {
+                    read "test:index,list,show"
+                    update "test:index,list,show,create,edit,delete"
+                    admin "test:*", "admin:*"
+                }
+            }
+        }
+        def features = ClosureToMap.convert(closure)
+        features.each {name, metadata ->
+            if (!metadata.name) {
+                metadata.name = name
+            }
+            crmFeatureService.addApplicationFeature(metadata)
+        }
+
+        when:
+        def testFeature = crmFeatureService.getFeature("test")
+
+        then:
+        testFeature?.name == "test"
+        testFeature?.permissions?.read != null
     }
 
     /**

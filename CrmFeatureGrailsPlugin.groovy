@@ -16,11 +16,11 @@
  */
 
 import grails.plugins.crm.feature.CrmFeature
-import grails.plugins.crm.feature.ClosureToMap
+import grails.plugins.crm.core.ClosureToMap
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "0.9.2"
+    def version = "0.9.5"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
     def loadAfter = ['controllers']
@@ -45,18 +45,16 @@ A feature is a unit of functionality that can be enabled or disabled per user ac
 
         for (plugin in manager.allPlugins) {
             if (plugin.instance.hasProperty('features')) {
-                CrmFeature.withTransaction {tx ->
-                    def f = plugin.instance.features
-                    if (f instanceof Map) {
-                        crmFeatureService.addApplicationFeature(f)
-                    } else if (f instanceof Closure) {
-                        def features = new ClosureToMap(f).props
-                        features.each {name, metadata ->
-                            if (!metadata.name) {
-                                metadata.name = name
-                            }
-                            crmFeatureService.addApplicationFeature(metadata)
+                def f = plugin.instance.features
+                if (f instanceof Map) {
+                    crmFeatureService.addApplicationFeature(f)
+                } else if (f instanceof Closure) {
+                    def features = ClosureToMap.convert(f)
+                    features.each {name, metadata ->
+                        if (!metadata.name) {
+                            metadata.name = name
                         }
+                        crmFeatureService.addApplicationFeature(metadata)
                     }
                 }
             }

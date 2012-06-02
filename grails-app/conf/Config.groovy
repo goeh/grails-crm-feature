@@ -33,3 +33,9 @@ grails.doc.license = "Licensed under the Apache License, Version 2.0"
 grails.doc.copyright = "Copyright (c) 2012. Göran Ehrsson,"
 grails.doc.footer = "Please contact the author with any corrections or suggestions"
 grails.doc.images = new File("src/docs/images")
+
+grails.cache.config = {
+    cache {
+      name 'features'
+   }
+}
