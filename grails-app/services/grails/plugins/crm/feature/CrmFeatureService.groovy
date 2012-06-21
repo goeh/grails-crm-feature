@@ -17,9 +17,6 @@
 
 package grails.plugins.crm.feature
 
-import grails.plugin.cache.CacheEvict
-import grails.plugin.cache.Cacheable
-
 /**
  * This service manages available features in a running application instance.
  *
@@ -30,52 +27,58 @@ class CrmFeatureService {
 
     static transactional = true
 
-    private static final Map featureMap = [:]
+    private static final Map<String, Feature> featureMap = [:]
+
+    def grailsApplication
 
     /**
      * Remove all installed features.
      */
     protected synchronized void removeAllFeatures() {
+        CrmFeature.list()*.delete()
         featureMap.clear()
         log.debug "All features removed from the application!"
     }
 
     /**
-     * Get a list of application features (names).
+     * Get a list of application features.
      *
-     * @return list of feature names
+     * @return list of features
      */
-    List getApplicationFeatures() {
-        featureMap.keySet().sort()
+    List<Feature> getApplicationFeatures() {
+        featureMap.values().sort{it.name}
+    }
+
+    /**
+     * Add application features defined by feature DSL.
+     *
+     * @param features feature DSL
+     */
+    void addApplicationFeatures(Closure featureDSL) {
+        new FeatureParser().parse(grailsApplication.mainContext, featureDSL).each {name, feature ->
+            addApplicationFeature(feature)
+        }
     }
 
     /**
      * Add an application feature.
      *
-     * Metadata properties:
-     * name: short name of feature
-     * description: String that describes the feature
-     * (see user guide for more metadata attributes)
-     *
-     * @param metadata metadata describing the feature
+     * @param f Feature instance
      */
-    void addApplicationFeature(Map metadata) {
-        String name = metadata.name
-        if (!name) {
-            throw new IllegalArgumentException("Feature metadata is missing required attribute [name]")
-        }
+    void addApplicationFeature(Feature f) {
+        def name = f.name
         if (featureMap[name]) {
             throw new IllegalArgumentException("The feature [$name] is already installed")
         }
         synchronized (featureMap) {
             if (!featureMap[name]) {
-                featureMap[name] = metadata.clone().asImmutable()
+                featureMap[name] = f
                 log.debug("Feature [$name] added to the application")
             }
         }
         // If enabled is set the feature is enabled by default.
-        if (metadata.enabled) {
-            enableFeature(name, metadata.role, metadata.tenant, metadata.expires)
+        if (f.enabled) {
+            enableFeature(name, f.role, f.tenant, f.expires)
         }
     }
 
@@ -86,6 +89,7 @@ class CrmFeatureService {
      * @param name feature name
      */
     void removeApplicationFeature(String name) {
+        disableFeature(name)
         synchronized (featureMap) {
             featureMap.remove(name)
         }
@@ -97,7 +101,7 @@ class CrmFeatureService {
      * @param name name of feature
      * @return a Map with feature metadata
      */
-    Map getFeature(String name) {
+    Feature getFeature(String name) {
         featureMap[name]
     }
 
@@ -110,13 +114,12 @@ class CrmFeatureService {
      * @param expires (optional) expiration date for the feature
      * @return
      */
-    @CacheEvict(value="features", allEntries=true)
     def enableFeature(def feature, String role = null, Long tenant = null, Date expires = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
         }
         for (f in feature) {
-            if (!getApplicationFeatures().contains(f)) {
+            if (!getFeature(f)) {
                 throw new IllegalArgumentException("Feature [$f] is not available in this application")
             }
             def result = CrmFeature.createCriteria().list() {
@@ -127,6 +130,7 @@ class CrmFeatureService {
                 if (tenant != null) {
                     eq('tenantId', tenant)
                 }
+                cache true
             }
             if(result) {
                 for(r in result) {
@@ -147,7 +151,6 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID to disable feature for a specific tenant
      * @return
      */
-    @CacheEvict(value="features", allEntries=true)
     def disableFeature(def feature, String role = null, Long tenant = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
@@ -161,6 +164,7 @@ class CrmFeatureService {
                 if (tenant != null) {
                     eq('tenantId', tenant)
                 }
+                cache true
             }
             if (result) {
                 // If no role or tenant was specified, delete this feature for ALL roles and tenants!
@@ -178,7 +182,6 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID to check feature for a specific tenant
      * @return true if the feature is enabled
      */
-    @Cacheable("features")
     boolean hasFeature(String feature, String role = null, Long tenant = null) {
         CrmFeature.createCriteria().count {
             eq('name', feature)
@@ -197,6 +200,7 @@ class CrmFeatureService {
                 isNull('expires')
                 gt('expires', new Date())
             }
+            cache true
         } > 0
     }
 
@@ -207,13 +211,12 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID
      * @return List of enabled feature names
      */
-    @Cacheable("features")
     List<String> getFeatures(String role = null, Long tenant = null) {
         CrmFeature.withCriteria {
             projections {
                 property('name')
             }
-            inList('name', getApplicationFeatures())
+            inList('name', applicationFeatures*.name)
             if (role != null) {
                 or {
                     isNull('role')
@@ -229,6 +232,7 @@ class CrmFeatureService {
                 isNull('expires')
                 gt('expires', new Date())
             }
+            cache true
         }
     }
 

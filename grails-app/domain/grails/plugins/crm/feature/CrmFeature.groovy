@@ -33,6 +33,7 @@ class CrmFeature {
     }
 
     static mapping = {
+        cache "read-write"
         tenantId index: 'crm_feature_idx'
         name index: 'crm_feature_idx'
         role index: 'crm_feature_idx'

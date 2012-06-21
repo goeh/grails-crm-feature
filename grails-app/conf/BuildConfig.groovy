@@ -37,11 +37,10 @@ grails.project.dependency.resolution = {
 
     plugins {
         build(":tomcat:$grailsVersion",
-              ":release:2.0.2") {
+              ":release:2.0.3") {
             export = false
         }
         compile "grails.crm:crm-core:latest.integration"
-        compile ":cache:1.0.0.BUILD-SNAPSHOT"
         test ":spock:latest.integration"
     }
 }
