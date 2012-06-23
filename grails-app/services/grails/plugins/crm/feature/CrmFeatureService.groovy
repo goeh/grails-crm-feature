@@ -209,9 +209,9 @@ class CrmFeatureService {
      *
      * @param role (optional) role name
      * @param tenant (optional) tenant ID
-     * @return List of enabled feature names
+     * @return List of enabled features
      */
-    List<String> getFeatures(String role = null, Long tenant = null) {
+    List<Feature> getFeatures(String role = null, Long tenant = null) {
         CrmFeature.withCriteria {
             projections {
                 property('name')
@@ -233,7 +233,7 @@ class CrmFeatureService {
                 gt('expires', new Date())
             }
             cache true
-        }
+        }.collect{getFeature(it)}
     }
 
 }

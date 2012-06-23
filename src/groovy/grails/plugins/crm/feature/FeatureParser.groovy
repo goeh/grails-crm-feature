@@ -50,6 +50,11 @@ class FeatureParser {
         current.linkParams = args.clone()
     }
 
+    @Deprecated
+    def main(Map args) {
+        current.linkParams = args.clone()
+    }
+
     def permissions(Closure arg) {
         current.permissions = new ShallowParser().parse(arg)
     }

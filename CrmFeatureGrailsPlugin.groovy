@@ -21,7 +21,7 @@ import grails.plugins.crm.feature.FeatureParser
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "0.9.7"
+    def version = "0.9.7.1"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
     def loadAfter = ['controllers']

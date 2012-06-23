@@ -38,7 +38,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.addApplicationFeatures {
             test {
                 description "Test Feature"
-                link controller: "test", action: "index"
+                main controller: "test", action: "index"
                 permissions {
                     read "test:index,list,show"
                     update "test:index,list:show,create,update"
@@ -153,7 +153,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         then:
         crmFeatureService.hasFeature("test") == false
         crmFeatureService.hasFeature("awesome") == true
-        crmFeatureService.getFeatures() == ["awesome"]
+        crmFeatureService.getFeatures()*.name == ["awesome"]
     }
 
     def "enable feature for specific role"() {
