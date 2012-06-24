@@ -46,7 +46,7 @@ class CrmFeatureService {
      * @return list of features
      */
     List<Feature> getApplicationFeatures() {
-        featureMap.values().sort{it.name}
+        featureMap.values().sort {it.name}
     }
 
     /**
@@ -55,7 +55,7 @@ class CrmFeatureService {
      * @param features feature DSL
      */
     void addApplicationFeatures(Closure featureDSL) {
-        new FeatureParser().parse(grailsApplication.mainContext, featureDSL).each {name, feature ->
+        new FeatureParser(grailsApplication).parse(featureDSL).each {name, feature ->
             addApplicationFeature(feature)
         }
     }
@@ -89,7 +89,7 @@ class CrmFeatureService {
      * @param name feature name
      */
     void removeApplicationFeature(String name) {
-        disableFeature(name)
+        CrmFeature.findAllByName(name)*.delete()
         synchronized (featureMap) {
             featureMap.remove(name)
         }
@@ -125,18 +125,28 @@ class CrmFeatureService {
             def result = CrmFeature.createCriteria().list() {
                 eq('name', f)
                 if (role != null) {
-                    eq('role', role)
+                    or {
+                        eq('role', role)
+                        isNull('role')
+                    }
+                } else {
+                    isNull('role')
                 }
                 if (tenant != null) {
-                    eq('tenantId', tenant)
+                    or {
+                        isNull('tenantId')
+                        eq('tenantId', tenant)
+                    }
+                } else {
+                    isNull('tenantId')
                 }
                 cache true
             }
-            if(result) {
-                for(r in result) {
+            if (result) {
+                for (r in result) {
                     r.expires = expires
                 }
-            } else  {
+            } else {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expires).save(failOnError: true)
                 log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [${expires ?: 'never'}]")
             }
@@ -147,7 +157,7 @@ class CrmFeatureService {
      * Disable feature.
      *
      * @param feature name of feature or List of feature names to disable
-     * @param role (option) enable only for a specific user role
+     * @param role (option) disable only for a specific user role
      * @param tenant (optional) tenant ID to disable feature for a specific tenant
      * @return
      */
@@ -159,10 +169,20 @@ class CrmFeatureService {
             def result = CrmFeature.withCriteria {
                 eq('name', f)
                 if (role != null) {
-                    eq('role', role)
+                    or {
+                        eq('role', role)
+                        isNull('role')
+                    }
+                } else {
+                    isNull('role')
                 }
                 if (tenant != null) {
-                    eq('tenantId', tenant)
+                    or {
+                        isNull('tenantId')
+                        eq('tenantId', tenant)
+                    }
+                } else {
+                    isNull('tenantId')
                 }
                 cache true
             }
@@ -194,7 +214,12 @@ class CrmFeatureService {
                 isNull('role')
             }
             if (tenant != null) {
-                eq('tenantId', tenant)
+                or {
+                    isNull('tenantId')
+                    eq('tenantId', tenant)
+                }
+            } else {
+                isNull('tenantId')
             }
             or {
                 isNull('expires')
@@ -226,14 +251,19 @@ class CrmFeatureService {
                 isNull('role')
             }
             if (tenant != null) {
-                eq('tenantId', tenant)
+                or {
+                    isNull('tenantId')
+                    eq('tenantId', tenant)
+                }
+            } else {
+                isNull('tenantId')
             }
             or {
                 isNull('expires')
                 gt('expires', new Date())
             }
             cache true
-        }.collect{getFeature(it)}
+        }.collect {getFeature(it)}
     }
 
 }

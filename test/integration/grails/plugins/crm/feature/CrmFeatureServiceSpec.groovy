@@ -25,7 +25,7 @@ import grails.plugins.crm.core.ClosureToMap
 class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
 
     def crmFeatureService
-    //def applicationContext
+    def grailsApplication
 
     def setup() {
         crmFeatureService.removeAllFeatures()
@@ -47,11 +47,6 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
                 tenant 1L
                 role "admin"
                 expires 30
-                dashboard {
-                    tasks {
-                        [40, 41, 42]
-                    }
-                }
             }
         }
 
@@ -73,7 +68,6 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         testFeature?.expires.year == now.year
         testFeature?.expires.month == now.month
         testFeature?.expires.date == now.date
-        testFeature?.dashboard?.tasks() == [40, 41, 42]
     }
 
     /**
@@ -98,8 +92,8 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
     def "Install a feature and make it enabled by default"() {
         when:
         crmFeatureService.addApplicationFeatures {test1 { description "Test Feature 1" } }
-        crmFeatureService.addApplicationFeatures{ test2 { description "Test Feature 2"; enabled false} }
-        crmFeatureService.addApplicationFeatures{ standard { description "A standard feature enabled by default"; enabled true} }
+        crmFeatureService.addApplicationFeatures { test2 { description "Test Feature 2"; enabled false} }
+        crmFeatureService.addApplicationFeatures { standard { description "A standard feature enabled by default"; enabled true} }
         then:
         crmFeatureService.getApplicationFeatures().size() == 3
         !crmFeatureService.hasFeature("test1")
@@ -115,6 +109,26 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         then:
         thrown(IllegalArgumentException)
         crmFeatureService.applicationFeatures.size() == 1
+    }
+
+    def "access grailApplication from feature DSL"() {
+        given:
+        grailsApplication.config.crmFeature.foo = "Foo Feature"
+        grailsApplication.config.crmFeature.permission.read = "test:index"
+
+        when:
+        crmFeatureService.addApplicationFeatures {
+            foo {
+                description grailsApplication.config.crmFeature.foo
+                permissions {
+                    read grailsApplication.config.crmFeature.permission.read
+                }
+            }
+        }
+
+        then:
+        crmFeatureService.getFeature("foo").description == "Foo Feature"
+        crmFeatureService.getFeature("foo").permissions.read == "test:index"
     }
 
     def "Make sure feature metadata works ok"() {
@@ -173,9 +187,9 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
     def "feature expiration"() {
 
         when:
-        crmFeatureService.addApplicationFeatures{basic { description "Basic Feature"; enabled true; expires new Date() + 30} }
-        crmFeatureService.addApplicationFeatures{advanced { description "Advanced Feature"; enabled true; expires new Date() + 1} }
-        crmFeatureService.addApplicationFeatures{legacy { description "Legacy Feature"; enabled true; expires new Date() - 1} }
+        crmFeatureService.addApplicationFeatures {basic { description "Basic Feature"; enabled true; expires new Date() + 30} }
+        crmFeatureService.addApplicationFeatures {advanced { description "Advanced Feature"; enabled true; expires new Date() + 1} }
+        crmFeatureService.addApplicationFeatures {legacy { description "Legacy Feature"; enabled true; expires new Date() - 1} }
 
         then:
         crmFeatureService.hasFeature("basic")

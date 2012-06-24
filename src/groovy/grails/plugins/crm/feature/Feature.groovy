@@ -12,7 +12,6 @@ class Feature {
     boolean enabled
     Date expires
     Map<String, List<String>> permissions
-    Map<String, Closure> dashboard
 
     Feature() {}
 
@@ -34,7 +33,6 @@ class Feature {
         s << " enabled=$enabled".toString()
         s << " expires=$expires".toString()
         s << " permissions=$permissions".toString()
-        s << " dashboard=${dashboard?.keySet()}".toString()
         s.toString()
     }
 }

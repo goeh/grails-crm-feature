@@ -1,23 +1,32 @@
 package grails.plugins.crm.feature
 
 import org.springframework.context.ApplicationContext
+import org.codehaus.groovy.grails.commons.GrailsApplication
 
 /**
  * Feature DSL parser.
  */
 class FeatureParser {
 
+    def grailsApplication
+    def applicationContext
+
     def features = [:]
 
     private Feature current
 
-    def parse(ApplicationContext applicationContext, Closure dsl) {
+    FeatureParser(GrailsApplication grailsApplication) {
+        this.grailsApplication = grailsApplication
+        this.applicationContext = grailsApplication.mainContext
+    }
+
+    def parse(Closure dsl) {
         def save = dsl.delegate
         try {
             dsl.delegate = this
             dsl.resolveStrategy = Closure.DELEGATE_FIRST
             dsl.each {
-                "$it"(applicationContext)
+                "$it"()
             }
         } finally {
             dsl.delegate = save
@@ -56,7 +65,7 @@ class FeatureParser {
     }
 
     def permissions(Closure arg) {
-        current.permissions = new ShallowParser().parse(arg)
+        current.permissions = new ShallowParser(grailsApplication).parse(arg)
     }
 
     def role(String arg) {
@@ -75,13 +84,19 @@ class FeatureParser {
         current.expires = new Date() + arg
     }
 
-    def dashboard(Closure arg) {
-        current.dashboard = new ShallowParser().parse(arg)
-    }
 }
 
 class ShallowParser {
+
+    def grailsApplication
+    def applicationContext
+
     private Map props = [:]
+
+    ShallowParser(GrailsApplication grailsApplication) {
+        this.grailsApplication = grailsApplication
+        this.applicationContext = grailsApplication.mainContext
+    }
 
     Map parse(Closure dsl) {
         def save = dsl.delegate
