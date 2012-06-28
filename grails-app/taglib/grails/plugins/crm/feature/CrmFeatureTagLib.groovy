@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * under the License.
  */
 
 package grails.plugins.crm.feature
@@ -40,8 +39,8 @@ class CrmFeatureTagLib {
             bodyText = feature.description ?: g.message(code: feature.name + '.label', default: feature.name)
         }
         def role = attrs.role ?: null
-        def tenant = attrs.tenant ?: null
-        def hasFeature = crmFeatureService.hasFeature(f, role, tenant)
+        def tenant = attrs.tenant ?: TenantUtils.tenant
+        def hasFeature = crmFeatureService.hasFeature(f, tenant, role)
         def enabled = (attrs.enabled?.asBoolean() == true) || hasFeature
         if (linkParams && enabled) {
             out << g.link(linkParams, bodyText)
@@ -54,8 +53,8 @@ class CrmFeatureTagLib {
             throwTagError("Tag [hasFeature] is missing required attribute [feature]")
         }
         def role = attrs.role ?: null
-        def tenant = attrs.tenant ?: null
-        if(crmFeatureService.hasFeature(f, role, tenant)) {
+        def tenant = attrs.tenant ?: TenantUtils.tenant
+        if(crmFeatureService.hasFeature(f, tenant, role)) {
             out << body()
         }
     }

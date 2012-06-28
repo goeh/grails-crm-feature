@@ -12,10 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * under the License.
  */
 
 package grails.plugins.crm.feature
+
+import grails.plugins.crm.core.TenantUtils
 
 /**
  * This service manages available features in a running application instance.
@@ -46,7 +47,7 @@ class CrmFeatureService {
      * @return list of features
      */
     List<Feature> getApplicationFeatures() {
-        featureMap.values().sort {it.name}
+        featureMap.values().toList()
     }
 
     /**
@@ -76,10 +77,6 @@ class CrmFeatureService {
                 log.debug("Feature [$name] added to the application")
             }
         }
-        // If enabled is set the feature is enabled by default.
-        if (f.enabled) {
-            enableFeature(name, f.role, f.tenant, f.expires)
-        }
     }
 
     /**
@@ -99,27 +96,56 @@ class CrmFeatureService {
      * Get metadata for a feature.
      *
      * @param name name of feature
-     * @return a Map with feature metadata
+     * @return a Feature instance
      */
-    Feature getFeature(String name) {
+    Feature getApplicationFeature(String name) {
         featureMap[name]
+    }
+
+    /**
+     * Get metadata for a feature.
+     *
+     * @param name name of feature
+     * @return a Feature instance
+     */
+    Feature getFeature(String name, Long tenantId = TenantUtils.tenant, String role = null) {
+        featureMap[name]
+    }
+
+    /**
+     * Convert a persisted CrmFeature instance to a Feature instance.
+     * @param crmFeature persisted feature configuration
+     * @return Feature instance
+     */
+    private Feature createFeature(CrmFeature crmFeature) {
+        def a = featureMap[crmFeature.name]
+        if (!a) {
+            throw new IllegalArgumentException("Feature [${crmFeature.name}] is not available in this application")
+        }
+        def f = new Feature(crmFeature.name)
+        f.role = crmFeature.role
+        f.tenant = crmFeature.tenantId
+        f.description = a.description
+        f.linkParams = a.linkParams
+        f.expires = crmFeature.expires
+        f.permissions = a.permissions
+        return f
     }
 
     /**
      * Enable feature.
      *
      * @param feature name of feature or List of feature names to enable
-     * @param role (option) enable only for a specific user role
      * @param tenant (optional) tenant ID to enable feature for a specific tenant
+     * @param role (option) enable only for a specific user role
      * @param expires (optional) expiration date for the feature
-     * @return
      */
-    def enableFeature(def feature, String role = null, Long tenant = null, Date expires = null) {
+    void enableFeature(def feature, Long tenant = null, String role = null, Date expires = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
         }
         for (f in feature) {
-            if (!getFeature(f)) {
+            if (!getApplicationFeature(f)) {
                 throw new IllegalArgumentException("Feature [$f] is not available in this application")
             }
             def result = CrmFeature.createCriteria().list() {
@@ -157,11 +183,10 @@ class CrmFeatureService {
      * Disable feature.
      *
      * @param feature name of feature or List of feature names to disable
-     * @param role (option) disable only for a specific user role
      * @param tenant (optional) tenant ID to disable feature for a specific tenant
-     * @return
+     * @param role (option) disable only for a specific user role
      */
-    def disableFeature(def feature, String role = null, Long tenant = null) {
+    void disableFeature(def feature, Long tenant = null, String role = null) {
         if (!(feature instanceof Collection)) {
             feature = [feature]
         }
@@ -186,11 +211,15 @@ class CrmFeatureService {
                 }
                 cache true
             }
+            def expired = new Date()
             if (result) {
-                // If no role or tenant was specified, delete this feature for ALL roles and tenants!
-                result*.delete()
-                log.debug("Feature [$f] disabled for role [$role] and tenant [$tenant]")
+                for (r in result) {
+                    r.expires = expired
+                }
+            } else {
+                new CrmFeature(tenantId: tenant, role: role, name: f, expires: expired).save(failOnError: true)
             }
+            log.debug("Feature [$f] disabled for role [$role] and tenant [$tenant]")
         }
     }
 
@@ -198,49 +227,40 @@ class CrmFeatureService {
      * Check if a feature is enabled.
      *
      * @param feature name of feature
-     * @params role (optional) role name to check feature for specific role
      * @param tenant (optional) tenant ID to check feature for a specific tenant
+     * @params role (optional) role name to check feature for specific role
      * @return true if the feature is enabled
      */
-    boolean hasFeature(String feature, String role = null, Long tenant = null) {
-        CrmFeature.createCriteria().count {
-            eq('name', feature)
-            if (role != null) {
-                or {
-                    eq('role', role)
-                    isNull('role')
-                }
+    boolean hasFeature(String feature, Long tenant = null, String role = null) {
+        getFeatures(tenant, role).find{it.name == feature}
+    }
+
+    private List<Feature> union(Collection<Feature> features, Collection<Feature> otherFeatures) {
+        def result = features.findAll{it.enabled} as Set
+        for(f in otherFeatures) {
+            if(f.enabled) {
+                result.add(f)
             } else {
-                isNull('role')
+                result.remove(f)
             }
-            if (tenant != null) {
-                or {
-                    isNull('tenantId')
-                    eq('tenantId', tenant)
-                }
-            } else {
-                isNull('tenantId')
-            }
-            or {
-                isNull('expires')
-                gt('expires', new Date())
-            }
-            cache true
-        } > 0
+        }
+        return result.toList()
     }
 
     /**
      * List all enabled features.
      *
-     * @param role (optional) role name
      * @param tenant (optional) tenant ID
+     * @param role (optional) role name
      * @return List of enabled features
      */
-    List<Feature> getFeatures(String role = null, Long tenant = null) {
-        CrmFeature.withCriteria {
-            projections {
-                property('name')
-            }
+    List<Feature> getFeatures(Long tenant = null, String role = null) {
+        def all = getApplicationFeatures().findAll{
+            if(tenant != it.tenant) return false
+            if(role != it.role) return false
+            return true
+        }
+        def result = CrmFeature.withCriteria {
             inList('name', applicationFeatures*.name)
             if (role != null) {
                 or {
@@ -258,12 +278,10 @@ class CrmFeatureService {
             } else {
                 isNull('tenantId')
             }
-            or {
-                isNull('expires')
-                gt('expires', new Date())
-            }
             cache true
-        }.collect {getFeature(it)}
+        }.collect{createFeature(it)}
+
+        union(all, result)
     }
 
 }

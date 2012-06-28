@@ -38,7 +38,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.addApplicationFeatures {
             test {
                 description "Test Feature"
-                main controller: "test", action: "index"
+                link controller: "test", action: "index"
                 permissions {
                     read "test:index,list,show"
                     update "test:index,list:show,create,update"
@@ -51,7 +51,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         }
 
         when:
-        def testFeature = crmFeatureService.getFeature("test")
+        def testFeature = crmFeatureService.getApplicationFeature("test")
 
         then:
         testFeature?.name == "test"
@@ -63,7 +63,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         testFeature?.permissions?.admin != null
         testFeature?.tenant == 1L
         testFeature?.role == "admin"
-        testFeature?.enabled == false
+        testFeature?.enabled == true
         def now = new Date() + 30
         testFeature?.expires.year == now.year
         testFeature?.expires.month == now.month
@@ -127,8 +127,8 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         }
 
         then:
-        crmFeatureService.getFeature("foo").description == "Foo Feature"
-        crmFeatureService.getFeature("foo").permissions.read == "test:index"
+        crmFeatureService.getApplicationFeature("foo").description == "Foo Feature"
+        crmFeatureService.getApplicationFeature("foo").permissions.read == "test:index"
     }
 
     def "Make sure feature metadata works ok"() {
@@ -137,7 +137,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         f.description = description
         crmFeatureService.addApplicationFeature(f)
         then:
-        crmFeatureService.getFeature(name).description == description
+        crmFeatureService.getApplicationFeature(name).description == description
         where:
         name      | description
         "test"    | "Test Feature"
@@ -176,20 +176,20 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.addApplicationFeature(new Feature("awesome"))
         crmFeatureService.addApplicationFeature(new Feature("admin"))
         crmFeatureService.enableFeature(["test", "awesome"])
-        crmFeatureService.enableFeature("admin", "admin")
+        crmFeatureService.enableFeature("admin", null, "admin")
         then:
         crmFeatureService.hasFeature("test") == true
         crmFeatureService.hasFeature("awesome") == true
         crmFeatureService.hasFeature("admin") == false
-        crmFeatureService.hasFeature("admin", "admin") == true
+        crmFeatureService.hasFeature("admin", null, "admin") == true
     }
 
     def "feature expiration"() {
 
         when:
-        crmFeatureService.addApplicationFeatures {basic { description "Basic Feature"; enabled true; expires new Date() + 30} }
-        crmFeatureService.addApplicationFeatures {advanced { description "Advanced Feature"; enabled true; expires new Date() + 1} }
-        crmFeatureService.addApplicationFeatures {legacy { description "Legacy Feature"; enabled true; expires new Date() - 1} }
+        crmFeatureService.addApplicationFeatures {basic { description "Basic Feature"; expires new Date() + 30} }
+        crmFeatureService.addApplicationFeatures {advanced { description "Advanced Feature"; expires new Date() + 1} }
+        crmFeatureService.addApplicationFeatures {legacy { description "Legacy Feature"; expires new Date() - 1} }
 
         then:
         crmFeatureService.hasFeature("basic")
