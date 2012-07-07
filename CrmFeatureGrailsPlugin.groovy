@@ -17,7 +17,7 @@
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "0.9.8.5"
+    def version = "0.9.8.8"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
     def loadAfter = ['controllers']

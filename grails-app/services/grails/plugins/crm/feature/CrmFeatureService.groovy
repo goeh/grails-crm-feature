@@ -232,13 +232,13 @@ class CrmFeatureService {
      * @return true if the feature is enabled
      */
     boolean hasFeature(String feature, Long tenant = null, String role = null) {
-        getFeatures(tenant, role).find{it.name == feature}
+        getFeatures(tenant, role).find {it.name == feature}
     }
 
     private List<Feature> union(Collection<Feature> features, Collection<Feature> otherFeatures) {
-        def result = features.findAll{it.enabled} as Set
-        for(f in otherFeatures) {
-            if(f.enabled) {
+        def result = features.findAll {it.enabled} as Set
+        for (f in otherFeatures) {
+            if (f.enabled) {
                 result.add(f)
             } else {
                 result.remove(f)
@@ -255,13 +255,14 @@ class CrmFeatureService {
      * @return List of enabled features
      */
     List<Feature> getFeatures(Long tenant = null, String role = null) {
-        def all = getApplicationFeatures().findAll{
-            if(tenant != it.tenant) return false
-            if(role != it.role) return false
+        def all = getApplicationFeatures()
+        def standard = all.findAll {
+            if (tenant != it.tenant && it.tenant != null) return false
+            if (role != it.role && it.role != null) return false
             return true
         }
-        def result = CrmFeature.withCriteria {
-            inList('name', applicationFeatures*.name)
+        def result = (all ? CrmFeature.withCriteria {
+            inList('name', all*.name)
             if (role != null) {
                 or {
                     isNull('role')
@@ -279,9 +280,9 @@ class CrmFeatureService {
                 isNull('tenantId')
             }
             cache true
-        }.collect{createFeature(it)}
+        } : []).collect {createFeature(it)}
 
-        union(all, result)
+        union(standard, result)
     }
 
 }

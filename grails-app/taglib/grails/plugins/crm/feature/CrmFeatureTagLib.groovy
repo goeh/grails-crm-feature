@@ -29,7 +29,7 @@ class CrmFeatureTagLib {
         if (!f) {
             throwTagError("Tag [featureLink] is missing required attribute [feature]")
         }
-        def feature = crmFeatureService.getFeature(f)
+        def feature = crmFeatureService.getApplicationFeature(f)
         if(! feature) {
             throwTagError("Tag [featureLink] refer to no-existing feature [$f]")
         }
@@ -56,6 +56,20 @@ class CrmFeatureTagLib {
         def tenant = attrs.tenant ?: TenantUtils.tenant
         if(crmFeatureService.hasFeature(f, tenant, role)) {
             out << body()
+        }
+    }
+
+    def eachFeature = {attrs, body->
+        def t = attrs.tenant ?: TenantUtils.tenant
+        def r = attrs.role ?: null
+        def features = crmFeatureService.getFeatures(t, r).sort{it.name}
+        int i = 0
+        for (f in features) {
+            def map = [(attrs.var ?: 'it'): f]
+            if (attrs.status) {
+                map[attrs.status] = i++
+            }
+            out << body(map)
         }
     }
 }
