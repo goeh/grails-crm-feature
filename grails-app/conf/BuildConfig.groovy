@@ -41,7 +41,7 @@ grails.project.dependency.resolution = {
             export = false
         }
         compile "grails.crm:crm-core:latest.integration"
-        test ":spock:latest.integration"
+        test ":spock:0.6"
     }
 }
 

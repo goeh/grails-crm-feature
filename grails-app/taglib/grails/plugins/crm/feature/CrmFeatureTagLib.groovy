@@ -30,20 +30,21 @@ class CrmFeatureTagLib {
             throwTagError("Tag [featureLink] is missing required attribute [feature]")
         }
         def feature = crmFeatureService.getApplicationFeature(f)
-        if(! feature) {
-            throwTagError("Tag [featureLink] refer to no-existing feature [$f]")
-        }
-        def linkParams = feature.linkParams
-        def bodyText = body().toString().trim()
-        if (!bodyText) {
-            bodyText = feature.description ?: g.message(code: feature.name + '.label', default: feature.name)
-        }
-        def role = attrs.role ?: null
-        def tenant = attrs.tenant ?: TenantUtils.tenant
-        def hasFeature = crmFeatureService.hasFeature(f, tenant, role)
-        def enabled = (attrs.enabled?.asBoolean() == true) || hasFeature
-        if (linkParams && enabled) {
-            out << g.link(linkParams, bodyText)
+        if(feature) {
+            def linkParams = feature.linkParams
+            def bodyText = body().toString().trim()
+            if (!bodyText) {
+                bodyText = feature.description ?: g.message(code: feature.name + '.label', default: feature.name)
+            }
+            def role = attrs.role ?: null
+            def tenant = attrs.tenant ?: TenantUtils.tenant
+            def hasFeature = crmFeatureService.hasFeature(f, tenant, role)
+            def enabled = (attrs.enabled?.asBoolean() == true) || hasFeature
+            if (linkParams && enabled) {
+                out << g.link(linkParams, bodyText)
+            }
+        } else {
+            log.debug("Tag [featureLink] refer to no-existing feature [$f]")
         }
     }
 
