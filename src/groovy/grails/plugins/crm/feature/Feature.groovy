@@ -26,7 +26,10 @@ class Feature {
     String role
     Long tenant
     Date expires
+    boolean required
+    boolean hidden
     Map<String, List<String>> permissions
+    Closure statistics
 
     Feature() {}
 
@@ -50,8 +53,10 @@ class Feature {
         s << " linkParams=$linkParams".toString()
         s << " role[$role]".toString()
         s << " tenant[$tenant]".toString()
+        s << " required=$required".toString()
         s << " enabled=$enabled".toString()
         s << " expires=$expires".toString()
+        s << " hidden=$hidden".toString()
         s << " permissions=$permissions".toString()
         s.toString()
     }

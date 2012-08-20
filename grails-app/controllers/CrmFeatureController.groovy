@@ -15,6 +15,9 @@
  */
 
 import grails.plugins.crm.core.TenantUtils
+import grails.converters.JSON
+import grails.converters.XML
+import javax.servlet.http.HttpServletResponse
 
 /**
  * Feature administration.
@@ -36,6 +39,22 @@ class CrmFeatureController {
         def tenantId = params.long('id') ?: TenantUtils.tenant
         def tenant = crmSecurityService.getTenantInfo(tenantId)
         def tenantFeatures = crmFeatureService.getFeatures(tenantId)
-        [applicationFeatures: crmFeatureService.applicationFeatures.sort{it.name}, tenantFeatures: tenantFeatures.sort{it.name}, tenant: tenant]
+        [applicationFeatures: crmFeatureService.applicationFeatures.sort {it.name}, tenantFeatures: tenantFeatures.sort {it.name}, tenant: tenant]
+    }
+
+    def statistics() {
+        def tenantId = params.long('id') ?: TenantUtils.tenant
+        def stats = crmFeatureService.getStatistics(params.name, tenantId) ?: [:]
+        withFormat {
+            html {
+                render template: 'statistics', plugin: 'crm-feature', model: stats
+            }
+            json {
+                render stats as JSON
+            }
+            xml {
+                render stats as XML
+            }
+        }
     }
 }

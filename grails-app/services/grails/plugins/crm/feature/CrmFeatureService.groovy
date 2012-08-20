@@ -118,7 +118,7 @@ class CrmFeatureService {
      * @return Feature instance
      */
     private Feature createFeature(CrmFeature crmFeature) {
-        def a = featureMap[crmFeature.name]
+        def a = getApplicationFeature(crmFeature.name)
         if (!a) {
             throw new IllegalArgumentException("Feature [${crmFeature.name}] is not available in this application")
         }
@@ -129,6 +129,8 @@ class CrmFeatureService {
         f.linkParams = a.linkParams
         f.expires = crmFeature.expires
         f.permissions = a.permissions
+        f.hidden = a.hidden
+        f.required = a.required
         return f
     }
 
@@ -285,4 +287,11 @@ class CrmFeatureService {
         union(standard, result)
     }
 
+    Map<String, Object> getStatistics(String feature, Long tenant = null) {
+        def f = getApplicationFeature(feature)
+        if (!f) {
+            throw new IllegalArgumentException("Feature [$feature] is not available in this application")
+        }
+        f.statistics?.call(tenant ?: TenantUtils.tenant) ?: null
+    }
 }

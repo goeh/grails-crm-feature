@@ -103,6 +103,18 @@ class FeatureParser {
             current.expires = new Date() // Expire now!
         }
     }
+
+    def hidden(boolean arg) {
+        current.hidden = arg
+    }
+
+    def required(boolean arg) {
+        current.required = arg
+    }
+
+    def statistics(Closure arg) {
+        current.statistics = arg
+    }
 }
 
 class ShallowParser {

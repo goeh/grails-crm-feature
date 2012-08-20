@@ -87,6 +87,8 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.applicationFeatures.size() == 1
         // features are disabled by default
         crmFeatureService.hasFeature("test") == false
+        crmFeatureService.getFeature("test").hidden == false
+        crmFeatureService.getFeature("test").required == false
     }
 
     def "Install a feature and make it enabled by default"() {
@@ -202,4 +204,39 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         then:
         crmFeatureService.hasFeature("legacy") // We gave it one more week above
     }
+
+    def "hidden features"() {
+        when:
+        crmFeatureService.addApplicationFeatures {secret { description "Secret hidden feature"; hidden true } }
+
+        then:
+        crmFeatureService.getFeature("secret").hidden
+    }
+
+    def "required features"() {
+        when:
+        crmFeatureService.addApplicationFeatures {mandatory { description "Mandatory feature"; required true } }
+
+        then:
+        crmFeatureService.getFeature("mandatory").required
+    }
+
+    def "feature statistics"() {
+
+        when:
+        crmFeatureService.addApplicationFeatures {
+            popular {
+                description "A popular feature"
+                expires new Date() + 365
+            }
+            statistics {tenant->
+                [usage: 'high', objects:1234567]
+            }
+        }
+
+        then:
+        crmFeatureService.getStatistics("popular").usage == 'high'
+        crmFeatureService.getStatistics("popular").objects == 1234567
+    }
+
 }
