@@ -18,6 +18,7 @@ import grails.plugins.crm.core.TenantUtils
 import grails.converters.JSON
 import grails.converters.XML
 import javax.servlet.http.HttpServletResponse
+import grails.plugins.crm.core.DateUtils
 
 /**
  * Feature administration.
@@ -32,6 +33,7 @@ class CrmFeatureController {
             ]
     ]
 
+    def grailsApplication
     def crmFeatureService
     def crmSecurityService
 
@@ -42,12 +44,73 @@ class CrmFeatureController {
         [applicationFeatures: crmFeatureService.applicationFeatures.sort {it.name}, tenantFeatures: tenantFeatures.sort {it.name}, tenant: tenant]
     }
 
+    def info(String id) {
+        def tenant = params.long('id') ?: TenantUtils.tenant
+        def feature = crmFeatureService.getApplicationFeature(params.name)
+        if (feature) {
+            render view: "/" + feature.name + "/feature", plugin: (feature.plugin != null ? feature.plugin : feature.name), model: [feature: feature, tenant:tenant]
+        } else {
+            log.error("Feature [$id] not found")
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+        }
+    }
+
+    def install() {
+        def tenant = params.long('id') ?: TenantUtils.tenant
+        def feature = crmFeatureService.getApplicationFeature(params.name)
+        if (feature) {
+            switch (request.method) {
+                case 'GET':
+                    return [feature: feature, tenant: tenant, referer: params.referer]
+                case 'POST':
+                    def trialDays = grailsApplication.config.crm.tenant.trialDays ?: 30
+                    def expires = DateUtils.endOfWeek(trialDays)
+                    crmFeatureService.enableFeature(feature.name, tenant, null, expires)
+                    def label = message(code: 'feature.' + feature.name + '.label', default: feature.name)
+                    flash.success = message(code: "crmFeature.installed.message", default: "Feature {0} installed", args: [label])
+                    if (params.referer) {
+                        redirect(uri: params.referer - request.contextPath)
+                    } else {
+                        redirect(mapping: 'start')
+                    }
+                    break
+            }
+        } else {
+            log.error("Feature [$id] not found")
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+        }
+    }
+
+    def uninstall() {
+        def tenant = params.long('id') ?: TenantUtils.tenant
+        def feature = crmFeatureService.getApplicationFeature(params.name)
+        if (feature) {
+            switch (request.method) {
+                case 'GET':
+                    return [feature: feature, tenant: tenant, referer: params.referer]
+                case 'POST':
+                    crmFeatureService.disableFeature(feature.name, tenant)
+                    def label = message(code: 'feature.' + feature.name + '.label', default: feature.name)
+                    flash.warning = message(code: "crmFeature.uninstalled.message", default: "Feature {0} uninstalled", args: [label])
+                    if (params.referer) {
+                        redirect(uri: params.referer - request.contextPath)
+                    } else {
+                        redirect(mapping: 'start')
+                    }
+                    break
+            }
+        } else {
+            log.error("Feature [$id] not found")
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+        }
+    }
+
     def statistics() {
         def tenantId = params.long('id') ?: TenantUtils.tenant
         def stats = crmFeatureService.getStatistics(params.name, tenantId) ?: [:]
         withFormat {
             html {
-                render template: 'statistics', plugin: 'crm-feature', model: stats
+                render template: (params.template ?: 'statistics'), plugin: 'crm-feature', model: stats
             }
             json {
                 render stats as JSON

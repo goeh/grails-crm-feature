@@ -63,6 +63,10 @@ class FeatureParser {
         name
     }
 
+    def plugin(String arg) {
+        current.plugin = arg
+    }
+
     def description(String arg) {
         current.description = arg
     }
@@ -97,7 +101,7 @@ class FeatureParser {
     }
 
     def enabled(boolean arg) {
-        if (arg) {
+        if (arg || current.required) { // It's illegal to disable a required feature.
             current.expires = null
         } else {
             current.expires = new Date() // Expire now!
@@ -110,11 +114,15 @@ class FeatureParser {
 
     def required(boolean arg) {
         current.required = arg
+        if(arg) {
+            enabled true // If a feature is required it must be enabled.
+        }
     }
 
     def statistics(Closure arg) {
         current.statistics = arg
     }
+
 }
 
 class ShallowParser {

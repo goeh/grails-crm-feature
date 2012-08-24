@@ -17,7 +17,8 @@
 
 package grails.plugins.crm.feature
 
-import grails.plugins.crm.core.ClosureToMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Tests for CrmFeatureService
@@ -26,6 +27,7 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
 
     def crmFeatureService
     def grailsApplication
+    def grailsEventsRegistry
 
     def setup() {
         crmFeatureService.removeAllFeatures()
@@ -221,6 +223,35 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.getFeature("mandatory").required
     }
 
+    def "listen to enableFeature events"() {
+        given: "setup event listener"
+        def result = []
+        def latch = new CountDownLatch(1)
+        grailsEventsRegistry.on("myFeature", "enableFeature") {event ->
+            result << event.feature
+            latch.countDown()
+        }
+
+        when: "feature is added to application"
+        crmFeatureService.addApplicationFeatures {
+            myFeature {
+                description "A feature that needs setup/initialization"
+            }
+        }
+
+        then: "result is empty since no event has been sent yet"
+        result.isEmpty()
+
+        when: "enabling a feature triggers the 'enableFeature' event on topic <feature name>"
+        // 'enableFeature' event is synchronous now, but may change to async in the future.
+        crmFeatureService.enableFeature("myFeature")
+        latch.await(10L, TimeUnit.SECONDS)
+
+        then: "feature name added to result list"
+        !result.isEmpty()
+        result[0] == 'myFeature'
+    }
+
     def "feature statistics"() {
 
         when:
@@ -229,8 +260,8 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
                 description "A popular feature"
                 expires new Date() + 365
             }
-            statistics {tenant->
-                [usage: 'high', objects:1234567]
+            statistics {tenant ->
+                [usage: 'high', objects: 1234567]
             }
         }
 

@@ -15,24 +15,11 @@ grails.project.dependency.resolution = {
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     repositories {
         grailsCentral()
-        // uncomment the below to enable remote dependency resolution
-        // from public Maven repositories
         //mavenCentral()
-        //mavenLocal()
         mavenRepo "http://labs.technipelago.se/repo/crm-releases-local/"
-        //mavenRepo "http://labs.technipelago.se/repo/plugins-releases-local/"
-        //mavenRepo "http://snapshots.repository.codehaus.org"
-        //mavenRepo "http://repository.codehaus.org"
-        //mavenRepo "http://download.java.net/maven/2/"
-        //mavenRepo "http://repository.jboss.com/maven2/"
+        mavenRepo "http://labs.technipelago.se/repo/plugin-releases-local/"
     }
     dependencies {
-        // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-
-        // runtime 'mysql:mysql-connector-java:5.1.5'
-        //compile('org.spockframework:spock-grails-support:0.6-groovy-1.6-SNAPSHOT') {
-        //    exclude "groovy-all"
-        //}
     }
 
     plugins {
@@ -40,9 +27,10 @@ grails.project.dependency.resolution = {
               ":release:2.0.4") {
             export = false
         }
+        test(":spock:0.6") { export = false }
+
+        compile(":platform-core:1.0.M6") { excludes 'resources' }
+
         compile "grails.crm:crm-core:latest.integration"
-        test ":spock:0.6"
     }
 }
-
-//grails.plugin.location.'crm-core'="../crm-core"

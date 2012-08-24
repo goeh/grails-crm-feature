@@ -20,6 +20,7 @@ package grails.plugins.crm.feature
  * Feature description.
  */
 class Feature {
+    String plugin
     String name
     String description
     Map<String, Object> linkParams
@@ -49,6 +50,9 @@ class Feature {
     String dump() {
         def s = new StringBuilder()
         s << this.toString()
+        if(plugin) {
+            s << " plugin=$plugin"
+        }
         s << " description=\"$description\"".toString()
         s << " linkParams=$linkParams".toString()
         s << " role[$role]".toString()

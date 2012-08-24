@@ -77,6 +77,7 @@ class CrmFeatureService {
                 log.debug("Feature [$name] added to the application")
             }
         }
+        event(for: "crm", topic: "addFeature", data: name)
     }
 
     /**
@@ -86,7 +87,14 @@ class CrmFeatureService {
      * @param name feature name
      */
     void removeApplicationFeature(String name) {
+        def f = featureMap[name]
+        if(f) {
+            // Tell system we are removing this feature and wait for listeners to complete.
+            event(for: "crm", topic: "removeFeature", data: name, fork: false)
+        }
+        // Remove all enable/disable records.
         CrmFeature.findAllByName(name)*.delete()
+        // Remove the feature from system.
         synchronized (featureMap) {
             featureMap.remove(name)
         }
@@ -142,12 +150,13 @@ class CrmFeatureService {
      * @param role (option) enable only for a specific user role
      * @param expires (optional) expiration date for the feature
      */
-    void enableFeature(def feature, Long tenant = null, String role = null, Date expires = null) {
-        if (!(feature instanceof Collection)) {
-            feature = [feature]
+    void enableFeature(def features, Long tenant = null, String role = null, Date expires = null) {
+        if (!(features instanceof Collection)) {
+            features = [features]
         }
-        for (f in feature) {
-            if (!getApplicationFeature(f)) {
+        for (f in features) {
+            def feature = getApplicationFeature(f)
+            if(! feature) {
                 throw new IllegalArgumentException("Feature [$f] is not available in this application")
             }
             def result = CrmFeature.createCriteria().list() {
@@ -178,6 +187,7 @@ class CrmFeatureService {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expires).save(failOnError: true)
                 log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [${expires ?: 'never'}]")
             }
+            event(for: f, topic: 'enableFeature', data: [feature: f, tenant: tenant, role:role, expires:expires], fork:false)
         }
     }
 
@@ -188,11 +198,15 @@ class CrmFeatureService {
      * @param tenant (optional) tenant ID to disable feature for a specific tenant
      * @param role (option) disable only for a specific user role
      */
-    void disableFeature(def feature, Long tenant = null, String role = null) {
-        if (!(feature instanceof Collection)) {
-            feature = [feature]
+    void disableFeature(def features, Long tenant = null, String role = null) {
+        if (!(features instanceof Collection)) {
+            features = [features]
         }
-        for (f in feature) {
+        for (f in features) {
+            def feature = getApplicationFeature(f)
+            if(! feature) {
+                log.warn("Disabling unavailable feature [$f] for tenant [$tenant]")
+            }
             def result = CrmFeature.withCriteria {
                 eq('name', f)
                 if (role != null) {
@@ -222,6 +236,7 @@ class CrmFeatureService {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expired).save(failOnError: true)
             }
             log.debug("Feature [$f] disabled for role [$role] and tenant [$tenant]")
+            event(for: f, topic: 'disableFeature', data: [feature: f, tenant: tenant, role:role], fork:false)
         }
     }
 
@@ -238,15 +253,15 @@ class CrmFeatureService {
     }
 
     private List<Feature> union(Collection<Feature> features, Collection<Feature> otherFeatures) {
-        def result = features.findAll {it.enabled} as Set
+        def result = features.findAll {it.enabled}
         for (f in otherFeatures) {
-            if (f.enabled) {
-                result.add(f)
-            } else {
+            if (f.enabled == false) {
                 result.remove(f)
+            } else if(! result.find{it.name == f.name}) {
+                result.add(f)
             }
         }
-        return result.toList()
+        return result
     }
 
     /**
@@ -287,11 +302,11 @@ class CrmFeatureService {
         union(standard, result)
     }
 
-    Map<String, Object> getStatistics(String feature, Long tenant = null) {
+    Map<String, Object> getStatistics(String feature, Long tenant = TenantUtils.tenant) {
         def f = getApplicationFeature(feature)
         if (!f) {
             throw new IllegalArgumentException("Feature [$feature] is not available in this application")
         }
-        f.statistics?.call(tenant ?: TenantUtils.tenant) ?: null
+        f.statistics?.call(tenant) ?: null
     }
 }
