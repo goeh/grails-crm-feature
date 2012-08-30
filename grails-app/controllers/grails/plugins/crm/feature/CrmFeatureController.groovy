@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+package grails.plugins.crm.feature
+
 import grails.plugins.crm.core.TenantUtils
 import grails.converters.JSON
 import grails.converters.XML
@@ -44,13 +46,16 @@ class CrmFeatureController {
         [applicationFeatures: crmFeatureService.applicationFeatures.sort {it.name}, tenantFeatures: tenantFeatures.sort {it.name}, tenant: tenant]
     }
 
-    def info(String id) {
-        def tenant = params.long('id') ?: TenantUtils.tenant
+    def info(Long id) {
+        if(! id) {
+            id = TenantUtils.tenant
+        }
+        def tenant = crmSecurityService.getTenantInfo(id)
         def feature = crmFeatureService.getApplicationFeature(params.name)
         if (feature) {
-            render view: "/" + feature.name + "/feature", plugin: (feature.plugin != null ? feature.plugin : feature.name), model: [feature: feature, tenant:tenant]
+            render template: "/" + feature.name + "/readme", plugin: (feature.plugin != null ? feature.plugin : feature.name), model: [feature: feature, tenant:tenant]
         } else {
-            log.error("Feature [$id] not found")
+            log.error("Feature [$name] not found")
             response.sendError(HttpServletResponse.SC_NOT_FOUND)
         }
     }
