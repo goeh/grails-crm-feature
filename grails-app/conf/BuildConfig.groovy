@@ -27,6 +27,8 @@ grails.project.dependency.resolution = {
               ":release:2.0.4") {
             export = false
         }
+        compile(":hibernate:$grailsVersion")
+
         test(":spock:0.6") { export = false }
 
         compile(":platform-core:1.0.M6") { excludes 'resources' }
