@@ -54,15 +54,15 @@ class FeatureParser {
         if (!args.size()) return
         if (args[0] instanceof Closure) {
             features[name] = current = new Feature(name)
-            setDefaults(current)
+            setDefaults()
             args[0].call()
         }
         return name
     }
 
-    private void setDefaults(Feature f) {
-        f.required = grailsApplication.config.crm.feature[f.name].required
-        f.hidden = grailsApplication.config.crm.feature[f.name].hidden
+    private void setDefaults() {
+        required grailsApplication.config.crm.feature[current.name].required.asBoolean()
+        hidden grailsApplication.config.crm.feature[current.name].hidden.asBoolean()
     }
 
     def propertyMissing(String name) {

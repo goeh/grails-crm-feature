@@ -40,8 +40,12 @@ class CrmFeatureTagLib {
             def tenant = attrs.tenant ?: TenantUtils.tenant
             def hasFeature = crmFeatureService.hasFeature(f, tenant, role)
             def enabled = (attrs.enabled?.asBoolean() == true) || hasFeature
-            if (linkParams && enabled) {
-                out << g.link(linkParams, bodyText)
+            if (enabled) {
+                if (linkParams) {
+                    out << g.link(linkParams, bodyText)
+                } else if (attrs.nolink?.asBoolean()) {
+                    out << bodyText
+                }
             }
         } else {
             log.debug("Tag [featureLink] refer to no-existing feature [$f]")
