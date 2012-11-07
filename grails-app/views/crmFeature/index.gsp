@@ -53,7 +53,7 @@
     <div class="span6">
         <g:if test="${tenant}">
             <h3>${tenant.name.encodeAsHTML()} features
-                <small>${tenant.user.username}</small>
+                <small>${tenant.user?.username ?: 'no account'}</small>
             </h3>
             <table class="table table-striped">
                 <thead>
