@@ -3,7 +3,7 @@
     def badge
     switch (usage) {
         case 'none':
-            badge = 'badge-error'
+            badge = 'badge-important'
             break
         case 'low':
             badge = 'badge-warning'
