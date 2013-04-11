@@ -15,8 +15,8 @@ grails.project.dependency.resolution = {
     log "warn"
     repositories {
         grailsHome()
-        grailsCentral()
         mavenRepo "http://labs.technipelago.se/repo/crm-releases-local/"
+        grailsCentral()
         //mavenRepo "http://labs.technipelago.se/repo/plugin-releases-local/"
     }
     dependencies {
@@ -24,14 +24,14 @@ grails.project.dependency.resolution = {
 
     plugins {
         build(":tomcat:$grailsVersion",
-              ":release:2.0.4") {
+              ":release:2.2.1") {
             export = false
         }
-        compile(":hibernate:$grailsVersion")
+        runtime(":hibernate:$grailsVersion")
 
         test(":spock:0.7") { export = false }
 
-        compile(":platform-core:1.0.M6") { excludes 'resources' }
+        compile(":platform-core:1.0.RC5") { excludes 'resources' }
 
         compile "grails.crm:crm-core:latest.integration"
     }
