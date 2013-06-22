@@ -17,13 +17,13 @@
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "1.1"
+    def version = "1.1.1"
     def grailsVersion = "2.0 > *"
     def dependsOn = [:]
-    def loadAfter = ['controllers']
+    def loadAfter = ['crmCore']
     def pluginExcludes = ["grails-app/views/error.gsp"]
     def title = "Manage installed Grails CRM features" // Headline display name of the plugin
-    def author = "Goran Ehrsson name"
+    def author = "Goran Ehrsson"
     def authorEmail = "goran@technipelago.se"
     def description = '''\
 This plugin manages installed "features" in Grails CRM.
