@@ -112,7 +112,7 @@ class CrmFeatureController {
 
     def statistics() {
         def tenantId = params.long('id') ?: TenantUtils.tenant
-        def stats = crmFeatureService.getStatistics(params.name, tenantId) ?: [:]
+        def stats = crmFeatureService.getStatistics(params.name, tenantId) ?: [usage: null]
         withFormat {
             html {
                 render template: (params.template ?: 'statistics'), plugin: 'crm-feature', model: stats

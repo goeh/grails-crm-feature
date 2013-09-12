@@ -16,9 +16,12 @@
 
 package grails.plugins.crm.feature
 
+import groovy.transform.CompileStatic
+
 /**
  * Feature description.
  */
+@CompileStatic
 class Feature {
     String plugin
     String name
@@ -43,12 +46,13 @@ class Feature {
         expires == null || (expires > new Date())
     }
 
+    @Override
     String toString() {
         name.toString()
     }
 
     String dump() {
-        def s = new StringBuilder()
+        final StringBuilder s = new StringBuilder()
         s << this.toString()
         if(plugin) {
             s << " plugin=$plugin"
@@ -58,13 +62,14 @@ class Feature {
         s << " role[$role]".toString()
         s << " tenant[$tenant]".toString()
         s << " required=$required".toString()
-        s << " enabled=$enabled".toString()
+        s << " enabled=${isEnabled()}".toString()
         s << " expires=$expires".toString()
         s << " hidden=$hidden".toString()
         s << " permissions=$permissions".toString()
         s.toString()
     }
 
+    @Override
     boolean equals(o) {
         if (this.is(o)) return true;
         if (getClass() != o.class) return false;
@@ -78,6 +83,7 @@ class Feature {
         return true;
     }
 
+    @Override
     int hashCode() {
         int result;
         result = (name != null ? name.hashCode() : 0);

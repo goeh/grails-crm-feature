@@ -17,6 +17,7 @@
 package grails.plugins.crm.feature
 
 import grails.plugins.crm.core.TenantUtils
+import groovy.transform.CompileStatic
 
 /**
  * This service manages available features in a running application instance.
@@ -46,6 +47,7 @@ class CrmFeatureService {
      *
      * @return list of features
      */
+    @CompileStatic
     List<Feature> getApplicationFeatures() {
         featureMap.values().toList()
     }
@@ -55,8 +57,8 @@ class CrmFeatureService {
      *
      * @param features feature DSL
      */
-    void addApplicationFeatures(Closure featureDSL) {
-        new FeatureParser(grailsApplication).parse(featureDSL).each {name, feature ->
+    void addApplicationFeatures(final Closure featureDSL) {
+        new FeatureParser(grailsApplication).parse(featureDSL).each {String name, Feature feature ->
             addApplicationFeature(feature)
         }
     }
@@ -66,8 +68,8 @@ class CrmFeatureService {
      *
      * @param f Feature instance
      */
-    void addApplicationFeature(Feature f) {
-        def name = f.name
+    void addApplicationFeature(final Feature f) {
+        final String name = f.name
         if (featureMap[name]) {
             throw new IllegalArgumentException("The feature [$name] is already installed")
         }
@@ -86,7 +88,7 @@ class CrmFeatureService {
      *
      * @param name feature name
      */
-    void removeApplicationFeature(String name) {
+    void removeApplicationFeature(final String name) {
         def f = featureMap[name]
         if(f) {
             // Tell system we are removing this feature and wait for listeners to complete.
@@ -106,7 +108,8 @@ class CrmFeatureService {
      * @param name name of feature
      * @return a Feature instance
      */
-    Feature getApplicationFeature(String name) {
+    @CompileStatic
+    Feature getApplicationFeature(final String name) {
         featureMap[name]
     }
 
@@ -116,7 +119,8 @@ class CrmFeatureService {
      * @param name name of feature
      * @return a Feature instance
      */
-    Feature getFeature(String name, Long tenantId = TenantUtils.tenant, String role = null) {
+    @CompileStatic
+    Feature getFeature(final String name, Long tenantId = TenantUtils.tenant, String role = null) {
         featureMap[name]
     }
 
@@ -125,6 +129,7 @@ class CrmFeatureService {
      * @param crmFeature persisted feature configuration
      * @return Feature instance
      */
+    @CompileStatic
     private Feature createFeature(CrmFeature crmFeature) {
         def a = getApplicationFeature(crmFeature.name)
         if (!a) {
@@ -248,17 +253,19 @@ class CrmFeatureService {
      * @params role (optional) role name to check feature for specific role
      * @return true if the feature is enabled
      */
-    boolean hasFeature(String feature, Long tenant = null, String role = null) {
-        getFeatures(tenant, role).find {it.name == feature}
+    @CompileStatic
+    boolean hasFeature(final String feature, Long tenant = null, String role = null) {
+        getFeatures(tenant, role).find {Feature f -> f.name == feature}
     }
 
+    @CompileStatic
     private List<Feature> union(Collection<Feature> features, Collection<Feature> otherFeatures) {
-        def result = features.findAll {it.enabled}
-        for (f in otherFeatures) {
-            if (f.enabled == false) {
-                result.remove(f)
-            } else if(! result.find{it.name == f.name}) {
-                result.add(f)
+        def result = features.findAll {Feature f -> f.enabled}
+        for (other in otherFeatures) {
+            if (other.enabled == false) {
+                result.remove(other)
+            } else if(! result.find{Feature f -> f.name == other.name}) {
+                result.add(other)
             }
         }
         return result

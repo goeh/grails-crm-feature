@@ -16,6 +16,7 @@
 
 package grails.plugins.crm.feature
 
+import groovy.transform.CompileStatic
 import org.springframework.context.ApplicationContext
 import org.codehaus.groovy.grails.commons.GrailsApplication
 
@@ -27,7 +28,7 @@ class FeatureParser {
     def grailsApplication
     def applicationContext
 
-    def features = [:]
+    Map<String, Feature> features = [:]
 
     private Feature current
 
@@ -36,7 +37,7 @@ class FeatureParser {
         this.applicationContext = grailsApplication.mainContext
     }
 
-    def parse(Closure dsl) {
+    Map<String, Feature> parse(Closure dsl) {
         def save = dsl.delegate
         try {
             dsl.delegate = this
@@ -47,7 +48,7 @@ class FeatureParser {
         } finally {
             dsl.delegate = save
         }
-        return features
+        features
     }
 
     def methodMissing(String name, args) {
@@ -69,10 +70,12 @@ class FeatureParser {
         name
     }
 
+    @CompileStatic
     def plugin(String arg) {
         current.plugin = arg
     }
 
+    @CompileStatic
     def description(String arg) {
         current.description = arg
     }
@@ -90,22 +93,27 @@ class FeatureParser {
         current.permissions = new ShallowParser(grailsApplication).parse(arg)
     }
 
+    @CompileStatic
     def role(String arg) {
         current.role = arg
     }
 
+    @CompileStatic
     def tenant(Long arg) {
         current.tenant = arg
     }
 
+    @CompileStatic
     def expires(Date arg) {
         current.expires = arg
     }
 
+    @CompileStatic
     def expires(int arg) {
         current.expires = new Date() + arg
     }
 
+    @CompileStatic
     def enabled(boolean arg) {
         if (arg || current.required) { // It's illegal to disable a required feature.
             current.expires = null
@@ -114,10 +122,12 @@ class FeatureParser {
         }
     }
 
+    @CompileStatic
     def hidden(boolean arg) {
         current.hidden = arg
     }
 
+    @CompileStatic
     def required(boolean arg) {
         current.required = arg
         if(arg) {
@@ -125,43 +135,9 @@ class FeatureParser {
         }
     }
 
+    @CompileStatic
     def statistics(Closure arg) {
         current.statistics = arg
     }
 
-}
-
-class ShallowParser {
-
-    def grailsApplication
-    def applicationContext
-
-    private Map props = [:]
-
-    ShallowParser(GrailsApplication grailsApplication) {
-        this.grailsApplication = grailsApplication
-        this.applicationContext = grailsApplication.mainContext
-    }
-
-    Map parse(Closure dsl) {
-        def save = dsl.delegate
-        try {
-            dsl.delegate = this
-            dsl.resolveStrategy = Closure.DELEGATE_FIRST
-            dsl()
-
-        } finally {
-            dsl.delegate = save
-        }
-        return props
-    }
-
-    def methodMissing(String name, args) {
-        props[name] = (args.size() > 1 ? args.toList() : args[0])
-        return name
-    }
-
-    def propertyMissing(String name) {
-        name
-    }
 }
