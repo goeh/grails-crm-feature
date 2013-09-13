@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Goran Ehrsson.
+ * Copyright (c) 2013 Goran Ehrsson.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * under the License.
  */
 
 class CrmFeatureGrailsPlugin {
     def groupId = "grails.crm"
-    def version = "1.1.1"
-    def grailsVersion = "2.0 > *"
+    def version = "1.2.0"
+    def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmCore']
     def pluginExcludes = ["grails-app/views/error.gsp"]
@@ -27,7 +26,7 @@ class CrmFeatureGrailsPlugin {
     def authorEmail = "goran@technipelago.se"
     def description = '''\
 This plugin manages installed "features" in Grails CRM.
-A feature is a unit of functionality that can be enabled or disabled per user account.
+A feature is a unit of functionality that can be enabled or disabled per user or role.
 '''
 
     def documentation = "http://grails.org/plugin/crm-feature"
