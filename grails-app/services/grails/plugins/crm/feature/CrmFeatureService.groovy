@@ -18,6 +18,8 @@ package grails.plugins.crm.feature
 
 import grails.plugins.crm.core.TenantUtils
 import groovy.transform.CompileStatic
+import org.springframework.cache.Cache
+import org.springframework.cache.CacheManager
 
 /**
  * This service manages available features in a running application instance.
@@ -27,11 +29,12 @@ import groovy.transform.CompileStatic
  */
 class CrmFeatureService {
 
-    static transactional = true
+    public static final String CRM_FEATURE_CACHE = "features"
 
-    private static final Map<String, Feature> featureMap = [:]
+    static Map<String, Feature> featureMap = [:]
 
     def grailsApplication
+    CacheManager grailsCacheManager
 
     /**
      * Remove all installed features.
@@ -39,6 +42,7 @@ class CrmFeatureService {
     protected synchronized void removeAllFeatures() {
         CrmFeature.list()*.delete()
         featureMap.clear()
+        clearCache()
         log.debug "All features removed from the application!"
     }
 
@@ -89,7 +93,7 @@ class CrmFeatureService {
      * @param name feature name
      */
     void removeApplicationFeature(final String name) {
-        def f = featureMap[name]
+        final Feature f = featureMap[name]
         if(f) {
             // Tell system we are removing this feature and wait for listeners to complete.
             event(for: "crm", topic: "removeFeature", data: name, fork: false)
@@ -130,12 +134,12 @@ class CrmFeatureService {
      * @return Feature instance
      */
     @CompileStatic
-    private Feature createFeature(CrmFeature crmFeature) {
-        def a = getApplicationFeature(crmFeature.name)
+    private Feature createFeature(final CrmFeature crmFeature) {
+        final Feature a = getApplicationFeature(crmFeature.name)
         if (!a) {
             throw new IllegalArgumentException("Feature [${crmFeature.name}] is not available in this application")
         }
-        def f = new Feature(crmFeature.name)
+        final Feature f = new Feature(crmFeature.name)
         f.role = crmFeature.role
         f.tenant = crmFeature.tenantId
         f.description = a.description
@@ -160,11 +164,11 @@ class CrmFeatureService {
             features = [features]
         }
         for (f in features) {
-            def feature = getApplicationFeature(f)
+            Feature feature = getApplicationFeature(f)
             if(! feature) {
                 throw new IllegalArgumentException("Feature [$f] is not available in this application")
             }
-            def result = CrmFeature.createCriteria().list() {
+            List result = CrmFeature.createCriteria().list() {
                 eq('name', f)
                 if (role != null) {
                     or {
@@ -194,6 +198,7 @@ class CrmFeatureService {
             }
             event(for: f, topic: 'enableFeature', data: [feature: f, tenant: tenant, role:role, expires:expires], fork:false)
         }
+        clearCache()
     }
 
     /**
@@ -208,11 +213,11 @@ class CrmFeatureService {
             features = [features]
         }
         for (f in features) {
-            def feature = getApplicationFeature(f)
+            Feature feature = getApplicationFeature(f)
             if(! feature) {
                 log.warn("Disabling unavailable feature [$f] for tenant [$tenant]")
             }
-            def result = CrmFeature.withCriteria {
+            List result = CrmFeature.withCriteria {
                 eq('name', f)
                 if (role != null) {
                     or {
@@ -232,7 +237,7 @@ class CrmFeatureService {
                 }
                 cache true
             }
-            def expired = new Date()
+            Date expired = new Date()
             if (result) {
                 for (r in result) {
                     r.expires = expired
@@ -243,6 +248,7 @@ class CrmFeatureService {
             log.debug("Feature [$f] disabled for role [$role] and tenant [$tenant]")
             event(for: f, topic: 'disableFeature', data: [feature: f, tenant: tenant, role:role], fork:false)
         }
+        clearCache()
     }
 
     /**
@@ -255,13 +261,21 @@ class CrmFeatureService {
      */
     @CompileStatic
     boolean hasFeature(final String feature, Long tenant = null, String role = null) {
-        getFeatures(tenant, role).find {Feature f -> f.name == feature}
+        final Cache cache = grailsCacheManager.getCache(CRM_FEATURE_CACHE)
+        final String key = "$feature#${tenant ?: 0}/$role".toString()
+        Boolean has = cache.get(key)?.get()
+        if(has == null) {
+            println "Cache miss for feature $feature"
+            has = (getFeatures(tenant, role).find {Feature f -> f.name == feature} != null)
+            cache.put(key, has)
+        }
+        return has
     }
 
     @CompileStatic
-    private List<Feature> union(Collection<Feature> features, Collection<Feature> otherFeatures) {
-        def result = features.findAll {Feature f -> f.enabled}
-        for (other in otherFeatures) {
+    private List<Feature> union(final Collection<Feature> features, final Collection<Feature> otherFeatures) {
+        Collection<Feature> result = features.findAll {Feature f -> f.enabled}
+        for (Feature other in otherFeatures) {
             if (other.enabled == false) {
                 result.remove(other)
             } else if(! result.find{Feature f -> f.name == other.name}) {
@@ -279,13 +293,13 @@ class CrmFeatureService {
      * @return List of enabled features
      */
     List<Feature> getFeatures(Long tenant = null, String role = null) {
-        def all = getApplicationFeatures()
-        def standard = all.findAll {
-            if (tenant != it.tenant && it.tenant != null) return false
-            if (role != it.role && it.role != null) return false
+        List<Feature> all = getApplicationFeatures()
+        List<Feature> standard = all.findAll { Feature f->
+            if (tenant != f.tenant && f.tenant != null) return false
+            if (role != f.role && f.role != null) return false
             return true
         }
-        def result = (all ? CrmFeature.withCriteria {
+        List result = (all ? CrmFeature.withCriteria {
             inList('name', all*.name)
             if (role != null) {
                 or {
@@ -309,11 +323,16 @@ class CrmFeatureService {
         union(standard, result)
     }
 
-    Map<String, Object> getStatistics(String feature, Long tenant = TenantUtils.tenant) {
-        def f = getApplicationFeature(feature)
+    Map<String, Object> getStatistics(final String feature, Long tenant = TenantUtils.tenant) {
+        final Feature f = getApplicationFeature(feature)
         if (!f) {
             throw new IllegalArgumentException("Feature [$feature] is not available in this application")
         }
         f.statistics?.call(tenant) ?: null
+    }
+
+    @CompileStatic
+    void clearCache() {
+        grailsCacheManager.getCache(CRM_FEATURE_CACHE).clear()
     }
 }
