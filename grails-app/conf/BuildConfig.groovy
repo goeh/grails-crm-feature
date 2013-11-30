@@ -29,11 +29,41 @@ grails.project.dependency.resolution = {
             export = false
             exclude "spock-grails-support"
         }
-        test(":codenarc:0.18.1") { export = false }
-        test(":code-coverage:1.2.6") { export = false }
+        test(":codenarc:0.19") { export = false }
+        test(":code-coverage:1.2.7") { export = false }
 
         compile(":platform-core:1.0.RC5") { excludes 'resources' }
         compile ":cache:1.1.1"
         compile "grails.crm:crm-core:latest.integration"
     }
 }
+
+codenarc {
+    reports = {
+        CrmXmlReport('xml') {
+            outputFile = 'target/CodeNarcReport.xml'
+            title = 'GR8 CRM CodeNarc Report'
+        }
+        CrmHtmlReport('html') {
+            outputFile = 'target/CodeNarcReport.html'
+            title = 'GR8 CRM CodeNarc Report'
+
+        }
+    }
+    properties = {
+        GrailsPublicControllerMethod.enabled = false
+        CatchException.enabled = false
+        CatchThrowable.enabled = false
+        ThrowException.enabled = false
+        ThrowRuntimeException.enabled = false
+        GrailsStatelessService.enabled = false
+        GrailsStatelessService.ignoreFieldNames = "dataSource,scope,sessionFactory,transactional,*Service,messageSource,grailsApplication,applicationContext,expose"
+    }
+    processTestUnit = false
+    processTestIntegration = false
+}
+
+coverage {
+    exclusions = ['**/radar/**']
+}
+
