@@ -1,6 +1,7 @@
 # Ignore Intellij IDEA files
-.idea
-*.iml
+/.idea
+/*.iml
+/cobertura.ser
 
 # Ignore build artifacts
 target
