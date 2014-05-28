@@ -282,7 +282,7 @@ class CrmFeatureService {
                 result.add(other)
             }
         }
-        return result
+        return result as List
     }
 
     /**

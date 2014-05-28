@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Tests for CrmFeatureService
  */
-class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
+class CrmFeatureServiceSpec extends grails.test.spock.IntegrationSpec {
 
     def crmFeatureService
     def grailsApplication
