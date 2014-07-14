@@ -35,13 +35,13 @@ Typically one {gr8crm} plugin provides one feature but there is no limit to the 
 
 Features can be added to an application in two ways.
 
-1. Add a feature property to the plugin descriptor
+1. Add a *features* property to the plugin descriptor
 2. Adding features using CrmFeatureService
 
 === Add a feature property to the plugin descriptor
 
 If a plugin provides a feature, the easiest way to add it to the application is by adding
-a property called +feature+ to the plugin descriptor. The feature property must return a Map or a Closure.
+a property called +features+ to the plugin descriptor. The features property must return a Map or a Closure.
 
 [source,groovy]
 ----
