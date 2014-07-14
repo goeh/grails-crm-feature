@@ -31,25 +31,22 @@ The +crm-feature+ plugin manages installed *features* in a {gr8crm} application.
 enabled or disabled per user role. Application code can check if a feature is enabled before doing some work.
 Typically one {gr8crm} plugin provides one feature but there is no limit to the number of features a plugin can provide.
 
-=== Adding features to an application
+== Adding features to an application
 
 Features can be added to an application in two ways.
 
 1. Add a feature property to the plugin descriptor
 2. Adding features using CrmFeatureService
 
-==== Add a feature property to the plugin descriptor
+=== Add a feature property to the plugin descriptor
 
 If a plugin provides a feature, the easiest way to add it to the application is by adding
-a property called @feature@ to the plugin descriptor. The feature property must return a Map or a Closure.
-The Map should contain feature metadata as described in the [metadata|guide:feature-metadata] section.
+a property called +feature+ to the plugin descriptor. The feature property must return a Map or a Closure.
 
 [source,groovy]
 ----
 class CrmContactGrailsPlugin {
-
     ...
-
     def features = [name: "crmContact", description: "Contact Management",
                         enabled: true, main: [controller: 'crmContact']]
 }
@@ -60,9 +57,7 @@ If you prefer the Closure variant it follows the same structure.
 [source,groovy]
 ----
 class CrmAgreementGrailsPlugin {
-
     ....
-
     def features = {
         crmAgreement {
             description "Agreement Management"
@@ -73,20 +68,10 @@ class CrmAgreementGrailsPlugin {
 }
 ----
 
-==== Adding features using CrmFeatureService
+==== Feature DSL
 
-You can also add features to the application by calling +crmFeatureService.addApplicationFeature(Map metadata)+.
-
-[source,groovy]
-----
-def metadata = [name:"awesome", description: "This feature is awesome", controller: "awesome", action: "index"]
-crmFeatureService.addApplicationFeature(metadata)
-----
-
-=== Feature DSL
-
-The feature plugin scans all installed plugins and look for a +feature+ property in the plugin descriptor.
-If the plugin has a +feature+ property it is parsed by the *Feature DSL* parser. The following example is from the
+The feature plugin scans all installed plugins and look for a +features+ property in the plugin descriptor.
+If the plugin has a +features+ property it is parsed by the *Feature DSL* parser. The following example is from the
 +crm-tags+ plugin. It provides tagging support in a {gr8crm} application. A feature with name *crmTag* will be
 installed in the application. The feature DSL also specifies standard permissions for common user roles.
 
@@ -108,7 +93,7 @@ def features = {
 }
 ----
 
-=== Feature Permissions
+==== Feature Permissions
 
 In the above example the *crmTag* feature DSL specifies a set of standard permissions that will be declared in th application.
 Users with the role *guest* will only get permission to call the *list* action on the *crmTag* controller.
@@ -117,14 +102,25 @@ Users with role *user* call all actions on the *crmTag* controller. And the role
 A developer can programatically add more roles and permissions if needed, but the feature DSL is an easy way to add necessary
 permissions during application startup.
 
-=== Required/Default Features
+==== Required/Default Features
 
 The +required true+ statement specifies that this feature is required, it will be enabled for all users and roles automatically.
 
-=== Hidden Features
+==== Hidden Features
 
 The +hidden true+ statement specifies that this feature should not be displayed in any *feature settings* pages.
 It's a default/required feature so there is no reason to let the application administrator enable or disable it.
+
+
+=== Adding features using CrmFeatureService
+
+You can also add features to the application by calling +crmFeatureService.addApplicationFeature(Map metadata)+.
+
+[source,groovy]
+----
+def metadata = [name:"awesome", description: "This feature is awesome", controller: "awesome", action: "index"]
+crmFeatureService.addApplicationFeature(metadata)
+----
 
 === Enabling/disabling features programatically
 
@@ -288,7 +284,7 @@ Iterate over all enabled features and render tag body for each iteration.
 |status              | Name of iteration count variable
 |===
 
-[NOTE]
+[IMPORTANT]
 ====
 An important design philosophy with {gr8crm} is to avoid tight coupling between plugins. This means that if you
 develop a {gr8crm} plugin you should try to avoid checking if features from other plugins are installed or not.
