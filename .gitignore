@@ -2,6 +2,7 @@
 /.idea
 /*.iml
 /cobertura.ser
+/.gradle
 
 # Ignore build artifacts
 target
