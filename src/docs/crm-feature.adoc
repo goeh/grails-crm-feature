@@ -160,7 +160,7 @@ assert metadata.description == "This feature is awesome"
 assert crmFeatureService.getFeature("not installed") == null
 ----
 
-[note]
+[NOTE]
 ====
 You can read metadata for a feature even though the feature is not enabled.
 ====
@@ -212,9 +212,9 @@ case you can remove unwanted features at application startup. For example in Boo
 
 [source,groovy]
 .BootStrap.groovy
-====
+----
 crmFeatureService.removeApplicationFeature("facebook")
-====
+----
 
 +void enableFeature(def features, Long tenant = null, String role = null, Date expires = null)+
 
