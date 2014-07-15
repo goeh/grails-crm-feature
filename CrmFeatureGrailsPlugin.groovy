@@ -26,7 +26,7 @@ class CrmFeatureGrailsPlugin {
     def authorEmail = "goran@technipelago.se"
     def description = '''\
 This plugin manages installed "features" in GR8 CRM.
-A feature is a unit of functionality that can be enabled or disabled per user or role.
+A feature is a unit of functionality that can be enabled or disabled per user role.
 '''
     def documentation = "https://github.com/goeh/grails-crm-feature"
     def license = "APACHE"
