@@ -15,8 +15,8 @@
  */
 
 class CrmFeatureGrailsPlugin {
-    def groupId = "grails.crm"
-    def version = "1.2.1"
+    def groupId = "gr8crm"
+    def version = "2.0.0"
     def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmCore']
@@ -28,7 +28,7 @@ class CrmFeatureGrailsPlugin {
 This plugin manages installed "features" in GR8 CRM.
 A feature is a unit of functionality that can be enabled or disabled per user role.
 '''
-    def documentation = "https://github.com/goeh/grails-crm-feature"
+    def documentation = "http://gr8crm.github.io/plugins/crm-feature/crm-feature.html"
     def license = "APACHE"
     def organization = [name: "Technipelago AB", url: "http://www.technipelago.se/"]
     def issueManagement = [system: "github", url: "https://github.com/goeh/grails-crm-feature/issues"]
