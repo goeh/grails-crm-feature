@@ -1,0 +1,304 @@
+= GR8 CRM - Feature Plugin
+Göran Ehrsson <goran@technipelago.se>
+:toc:
+:numbered:
+:icons: font
+:imagesdir: ./images
+:source-highlighter: prettify
+:homepage: http://gr8crm.github.io
+:gr8crm: GR8 CRM
+:gr8source: https://github.com/goeh/grails-crm-feature
+:license: This plugin is licensed with http://www.apache.org/licenses/LICENSE-2.0.html[Apache License version 2.0]
+
+== Introduction
+
+{gr8crm} is a set of http://www.grails.org/[Grails Web Application Framework]
+plugins that makes it easy to develop web applications with CRM functionality.
+
+You can find more information about {gr8crm} on the main documentation site {homepage}.
+
+=== Customer relationship management
+Customer relationship management (CRM) is a system for managing a company’s interactions with current and future customers.
+It involves using technology to organize, automate and synchronize sales, marketing, customer service, and technical support.
+http://en.wikipedia.org/wiki/Customer_relationship_management[Wikipedia]
+
+The {gr8crm} "Ecosystem" currently contains over 40 Grails plugins. For a complete list of plugins see {homepage}.
+
+Each {gr8crm} plugin defines a http://martinfowler.com/bliki/BoundedContext.html[Bounded Context]
+that focus on one specific domain, for example *contact*, *project* or *document*.
+
+== CRM Feature Plugin
+
+The +crm-feature+ plugin manages installed *features* in a {gr8crm} application. A feature is a unit of functionality that can be
+enabled or disabled per user role. Application code can check if a feature is enabled before doing some work.
+Typically one {gr8crm} plugin provides one feature but there is no limit to the number of features a plugin can provide.
+
+== Adding features to an application
+
+Features can be added to an application in two ways.
+
+1. Add a *features* property to the plugin descriptor
+2. Adding features using CrmFeatureService
+
+=== Add a feature property to the plugin descriptor
+
+If a plugin provides a feature, the easiest way to add it to the application is by adding
+a property called +features+ to the plugin descriptor. The features property must return a Map or a Closure.
+
+[source,groovy]
+----
+class CrmContactGrailsPlugin {
+    ...
+    def features = [name: "crmContact", description: "Contact Management",
+                        enabled: true, main: [controller: 'crmContact']]
+}
+----
+
+If you prefer the Closure variant it follows the same structure.
+
+[source,groovy]
+----
+class CrmAgreementGrailsPlugin {
+    ....
+    def features = {
+        crmAgreement {
+            description "Agreement Management"
+            main        controller: "crmAgreement", action: "index"
+            enabled     false // this is default
+        }
+    }
+}
+----
+
+==== Feature DSL
+
+The feature plugin scans all installed plugins and look for a +features+ property in the plugin descriptor.
+If the plugin has a +features+ property it is parsed by the *Feature DSL* parser. The following example is from the
++crm-tags+ plugin. It provides tagging support in a {gr8crm} application. A feature with name *crmTag* will be
+installed in the application. The feature DSL also specifies standard permissions for common user roles.
+
+[source,groovy]
+.CrmTagsGrailsPlugin.groovy
+----
+def features = {
+    crmTag {
+        description "Tag domain instances with user-defined labels"
+        permissions {
+            guest "crmTag:list"
+            partner "crmTag:list"
+            user "crmTag:*"
+            admin "crmTag,crmTagAdmin:*"
+        }
+        required true
+        hidden true
+    }
+}
+----
+
+==== Feature Permissions
+
+In the above example the *crmTag* feature DSL specifies a set of standard permissions that will be declared in th application.
+Users with the role *guest* will only get permission to call the *list* action on the *crmTag* controller.
+Users with role *user* call all actions on the *crmTag* controller. And the role *admin* can also call admin actions.
+
+A developer can programatically add more roles and permissions if needed, but the feature DSL is an easy way to add necessary
+permissions during application startup.
+
+==== Required/Default Features
+
+The +required true+ statement specifies that this feature is required, it will be enabled for all users and roles automatically.
+
+==== Hidden Features
+
+The +hidden true+ statement specifies that this feature should not be displayed in any *feature settings* pages.
+It's a default/required feature so there is no reason to let the application administrator enable or disable it.
+
+
+=== Adding features using CrmFeatureService
+
+You can also add features to the application by calling +crmFeatureService.addApplicationFeature(Map metadata)+.
+
+[source,groovy]
+----
+def metadata = [name:"awesome", description: "This feature is awesome", controller: "awesome", action: "index"]
+crmFeatureService.addApplicationFeature(metadata)
+----
+
+=== Enabling/disabling features programatically
+
+Although many features can be available in an application, features are normally not enabled by default.
+Application code can enable features for specific user roles and/or tenants.
+
+[source,groovy]
+----
+Long tenant = grails.crm.core.TenantUtils.tenant
+String role = "VIP_ROLE"
+crmFeatureService.enableFeature("awesome", role, tenant)
+----
+
+You can also make it possible for system administrators to enable features on-demand,
+this is however application specific and can be implemented with code like above.
+
+=== Check if feature is enabled
+
+[source,groovy]
+----
+Long tenant = grails.crm.core.TenantUtils.tenant
+if(crmFeatureService.hasFeature("awesome", null, tenant)) {
+    // The "awesome" feature is installed and enabled for all roles, great!
+}
+----
+
+=== Get metadata for a feature
+
+Each feature provide a set of [metadata|guide:feature-metadata] properties.
+
+[source,groovy]
+----
+Map metadata = crmFeatureService.getFeature("awesome");
+assert metadata.description == "This feature is awesome"
+
+// null is returned if the feature is not installed
+assert crmFeatureService.getFeature("not installed") == null
+----
+
+[NOTE]
+====
+You can read metadata for a feature even though the feature is not enabled.
+====
+
+
+== Services
+
+The *crm-feature* plugin provide a service called +CrmFeatureService+.
+This service contains methods for enabling/disabling features for users and roles.
+
+=== CrmFeatureService
+
++List<Feature> getApplicationFeatures()+
+
+Returns all the features that are available in the application, even disabled features are included.
+
++Feature getApplicationFeature(final String name)+
+
+Returns metadata for a specific application feature. A metadata instance has the following properties:
+
+|===
+|*Attribute* | *Description*
+|name        | The unique name of the feature
+|description | Short text that describes the feature
+|enabled     | If *true* the feature will be enabled by default, otherwise features are disabled by default.
+|role        | If +enabled+ is *true* the feature can optionally be enabled for a specific role (String)
+|tenant      | If +enabled+ is *true* the feature can optionally be enabled for a specific tenant (Long)
+|info        | (recommended) Map with parameters to createLink() to access this feature's information page
+|admin       | (optional) Map with parameters to createLink() to access this feature's administration page
+|main        | (optional) Map with parameters to createLink() to access this feature's start page
+|===
+
+The properties +info+, +help+, +admin+ and +main+ contains a Map with the following properties:
+
+|===
+|*Property*  | *Description*
+|controller  | *controller* attribute for createLink()
+|action      | (optional) *action* attribute for createLink()
+|mapping     | (optional) named URL mapping to use to rewrite the link
+|params      | (optional) *params* attribute for createLink()
+|===
+
++removeApplicationFeature(String name)+
+
+To remove a feature you normally disable it instead of removing it.
+If an unwanted feature is the only feature provided by a plugin, it's probably better to uninstall the plugin completely.
+But there may be occasions where you want one feature from a plugin that provides several features. In that
+case you can remove unwanted features at application startup. For example in BootStrap.groovy.
+
+[source,groovy]
+.BootStrap.groovy
+----
+crmFeatureService.removeApplicationFeature("facebook")
+----
+
++void enableFeature(def features, Long tenant = null, String role = null, Date expires = null)+
+
+Enable a feature for a specific user role or for all roles in a tenant.
+The +features+ parameter can be a feature name or a collection of feature names.
+If no +tenant+ is specified then the current executing tenant will be used.
+If no +role+ is specified then the feature will be enabled for all roles in the tenant.
+An expiration date can be specified. When the date has passed the feature will be disabled.
+This can be used to provide a *trial period* where a feature will be enabled for a limited period.
+
++void disableFeature(def features, Long tenant = null, String role = null)+
+
+Disable a feature for a specific user role or for all roles in a tenant.
+The +features+ parameter can be a feature name or a collection of feature names.
+If no +tenant+ is specified then the current executing tenant will be used.
+If no +role+ is specified then the feature will be disabled for all roles in the tenant.
+
++boolean hasFeature(final String feature, Long tenant = null, String role = null)+
+
+Check if a feature is enabled.
+If no +tenant+ is specified then the current executing tenant will be used.
+If no +role+ is specified then it will check if the feature is enabled for all users in the tenant.
+
++List<Feature> getFeatures(Long tenant = null, String role = null)+
+
+List all enabled features.
+If no +tenant+ is specified then features enabled in the current executing tenant will be returned.
+If no +role+ is specified then all features enabled in the tenant will be returned.
+
+== Tag Libraries
+
+The +crm-feature+ plugin provides a few GSP tags under the +crm+ namespace.
+
+=== featureLink
+
+This tag renders a hyperlink to the main controller of a feature, if the feature is enabled for the current user.
+
+|===
+|*Attribute*         | *Description*
+|feature             | Name of feature
+|tenant              | Render link only if the feature is enabled in the specified tenant (default = current tenant)
+|role                | Render link only if the feature is enabled for the specified user role
+|enabled             | if *true* bypass checks and render the link even if the feature is not enabled
+|nolink              | If *true* and the feature has no main controller, render tag body (but no hyperlink)
+|===
+
+=== hasFeature
+
+Check if a feature is enabled and render the tag body if it is.
+
+|===
+|*Attribute*         | *Description*
+|feature             | Name of feature
+|tenant              | Render tag body only if the feature is enabled in the specified tenant (default = current tenant)
+|role                | Render tag body only if the feature is enabled for the specified user role
+|===
+
+=== eachFeature
+
+Iterate over all enabled features and render tag body for each iteration.
+
+|===
+|*Attribute*         | *Description*
+|tenant              | Render tag body only if the feature is enabled in the specified tenant (default = current tenant)
+|role                | Render tag body only if the feature is enabled for the specified user role
+|var                 | Name of iteration variable (default = "it")
+|status              | Name of iteration count variable
+|===
+
+[IMPORTANT]
+====
+An important design philosophy with {gr8crm} is to avoid tight coupling between plugins. This means that if you
+develop a {gr8crm} plugin you should try to avoid checking if features from other plugins are installed or not.
+
+The application is the container that knows about all installed plugins and you are free to check for feature availability
+in application code, but you should avoid checking for features in plugin code. Use events instead.
+====
+
+== License
+
+{license}
+
+== Source Code
+
+The source code for this plugin is available at {gr8source}

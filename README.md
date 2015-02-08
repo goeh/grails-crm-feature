@@ -13,3 +13,5 @@ With CRM we mean features like:
 # Grails CRM - Feature Plugin
 
 This plugin manages installed features in Grails CRM.
+
+Documentation is located at [gr8crm.github.io](http://gr8crm.github.io/plugins/crm-feature/crm-feature.html)

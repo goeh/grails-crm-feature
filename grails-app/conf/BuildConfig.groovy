@@ -2,6 +2,10 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target"
+grails.project.class.dir = "target/classes"
+grails.project.test.class.dir = "target/test-classes"
+grails.project.test.reports.dir = "target/test-reports"
+grails.project.target.level = 1.6
 
 grails.project.repos.default = "crm"
 
@@ -17,6 +21,7 @@ grails.project.dependency.resolver = "maven"
 grails.project.dependency.resolution = {
     inherits "global"
     log "warn"
+    legacyResolve false
     repositories {
         mavenRepo "http://labs.technipelago.se/repo/crm-releases-local/"
         //mavenRepo "http://labs.technipelago.se/repo/plugin-releases-local/"
