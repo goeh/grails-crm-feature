@@ -32,6 +32,6 @@ grails.project.dependency.resolution = {
 
         compile(":platform-core:1.0.0") { excludes 'resources' }
         compile ":cache:1.1.1"
-        compile ":crm-core:2.0.0"
+        compile ":crm-core:2.0.2"
     }
 }
