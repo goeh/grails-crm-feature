@@ -295,10 +295,22 @@ The application is the container that knows about all installed plugins and you 
 in application code, but you should avoid checking for features in plugin code. Use events instead.
 ====
 
+
+== Changes
+
+2.4.0:: First version compatible with Grails 2.4.4.
+2.0.0:: First public release.
+
 == License
 
-{license}
+This plugin is licensed with http://www.apache.org/licenses/LICENSE-2.0.html[Apache License version 2.0]
 
 == Source Code
 
 The source code for this plugin is available at {gr8source}
+
+== Contributing
+
+Please report {gr8source}/issues[issues or suggestions].
+
+Want to improve the plugin: Fork the {gr8source}[repository] and send a pull request.
