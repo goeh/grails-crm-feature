@@ -270,4 +270,27 @@ class CrmFeatureServiceSpec extends grails.plugin.spock.IntegrationSpec {
         crmFeatureService.getStatistics("popular").objects == 1234567
     }
 
+    def "theme feature"() {
+        // Add features the same way CrmFeatureGrailsPlugin does it.
+        given:
+
+        crmFeatureService.addApplicationFeatures {
+            sunny {
+                description "A feature only available in tenants with the 'sunny' theme"
+                link controller: "sunny", action: "index"
+                permissions {
+                    read "sunny:index,list,show"
+                    update "sunny:index,list:show,create,update"
+                    admin "sunny:*"
+                }
+                theme "sunny"
+            }
+        }
+
+        when:
+        def sunnyFeature = crmFeatureService.getApplicationFeature("sunny")
+
+        then:
+        sunnyFeature.theme == 'sunny'
+    }
 }

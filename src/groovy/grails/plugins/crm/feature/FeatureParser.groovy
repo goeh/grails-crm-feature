@@ -76,6 +76,11 @@ class FeatureParser {
     }
 
     @CompileStatic
+    def theme(String arg) {
+        current.theme = arg
+    }
+
+    @CompileStatic
     def description(String arg) {
         current.description = arg
     }
