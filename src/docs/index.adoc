@@ -29,7 +29,7 @@ that focus on one specific domain, for example *contact*, *project* or *document
 
 == CRM Feature Plugin
 
-The +crm-feature+ plugin manages installed *features* in a {gr8crm} application. A feature is a unit of functionality that can be
+The `crm-feature` plugin manages installed *features* in a {gr8crm} application. A feature is a unit of functionality that can be
 enabled or disabled per user role. Application code can check if a feature is enabled before doing some work.
 Typically one {gr8crm} plugin provides one feature but there is no limit to the number of features a plugin can provide.
 
@@ -43,7 +43,7 @@ Features can be added to an application in two ways.
 === Add a feature property to the plugin descriptor
 
 If a plugin provides a feature, the easiest way to add it to the application is by adding
-a property called +features+ to the plugin descriptor. The features property must return a Map or a Closure.
+a property called `features` to the plugin descriptor. The features property must return a Map or a Closure.
 
 [source,groovy]
 ----
@@ -72,9 +72,9 @@ class CrmAgreementGrailsPlugin {
 
 ==== Feature DSL
 
-The feature plugin scans all installed plugins and look for a +features+ property in the plugin descriptor.
-If the plugin has a +features+ property it is parsed by the *Feature DSL* parser. The following example is from the
-+crm-tags+ plugin. It provides tagging support in a {gr8crm} application. A feature with name *crmTag* will be
+The feature plugin scans all installed plugins and look for a `features` property in the plugin descriptor.
+If the plugin has a `features` property it is parsed by the *Feature DSL* parser. The following example is from the
+`crm-tags` plugin. It provides tagging support in a {gr8crm} application. A feature with name *crmTag* will be
 installed in the application. The feature DSL also specifies standard permissions for common user roles.
 
 [source,groovy]
@@ -89,6 +89,7 @@ def features = {
             user "crmTag:*"
             admin "crmTag,crmTagAdmin:*"
         }
+        theme "premium" // Feature is only available to tenants with the premium theme.
         required true
         hidden true
     }
@@ -106,17 +107,20 @@ permissions during application startup.
 
 ==== Required/Default Features
 
-The +required true+ statement specifies that this feature is required, it will be enabled for all users and roles automatically.
+The `required true` statement specifies that this feature is required, it will be enabled for all users and roles automatically.
 
 ==== Hidden Features
 
-The +hidden true+ statement specifies that this feature should not be displayed in any *feature settings* pages.
+The `hidden true` statement specifies that this feature should not be displayed in any *feature settings* pages.
 It's a default/required feature so there is no reason to let the application administrator enable or disable it.
 
+==== Theme Features
+
+The `theme` statement specifies that the feature is only available to tenants that uses a specific CRM theme.
 
 === Adding features using CrmFeatureService
 
-You can also add features to the application by calling +crmFeatureService.addApplicationFeature(Map metadata)+.
+You can also add features to the application by calling `crmFeatureService.addApplicationFeature(Map metadata)`.
 
 [source,groovy]
 ----
@@ -170,16 +174,16 @@ You can read metadata for a feature even though the feature is not enabled.
 
 == Services
 
-The *crm-feature* plugin provide a service called +CrmFeatureService+.
+The *crm-feature* plugin provide a service called `CrmFeatureService`.
 This service contains methods for enabling/disabling features for users and roles.
 
 === CrmFeatureService
 
-+List<Feature> getApplicationFeatures()+
+`List<Feature> getApplicationFeatures()`
 
 Returns all the features that are available in the application, even disabled features are included.
 
-+Feature getApplicationFeature(final String name)+
+`Feature getApplicationFeature(final String name)`
 
 Returns metadata for a specific application feature. A metadata instance has the following properties:
 
@@ -188,14 +192,14 @@ Returns metadata for a specific application feature. A metadata instance has the
 |name        | The unique name of the feature
 |description | Short text that describes the feature
 |enabled     | If *true* the feature will be enabled by default, otherwise features are disabled by default.
-|role        | If +enabled+ is *true* the feature can optionally be enabled for a specific role (String)
-|tenant      | If +enabled+ is *true* the feature can optionally be enabled for a specific tenant (Long)
+|role        | If `enabled` is *true* the feature can optionally be enabled for a specific role (String)
+|tenant      | If `enabled` is *true* the feature can optionally be enabled for a specific tenant (Long)
 |info        | (recommended) Map with parameters to createLink() to access this feature's information page
 |admin       | (optional) Map with parameters to createLink() to access this feature's administration page
 |main        | (optional) Map with parameters to createLink() to access this feature's start page
 |===
 
-The properties +info+, +help+, +admin+ and +main+ contains a Map with the following properties:
+The properties `info`, `help`, `admin` and `main` contains a Map with the following properties:
 
 |===
 |*Property*  | *Description*
@@ -205,7 +209,7 @@ The properties +info+, +help+, +admin+ and +main+ contains a Map with the follow
 |params      | (optional) *params* attribute for createLink()
 |===
 
-+removeApplicationFeature(String name)+
+`removeApplicationFeature(String name)`
 
 To remove a feature you normally disable it instead of removing it.
 If an unwanted feature is the only feature provided by a plugin, it's probably better to uninstall the plugin completely.
@@ -218,37 +222,37 @@ case you can remove unwanted features at application startup. For example in Boo
 crmFeatureService.removeApplicationFeature("facebook")
 ----
 
-+void enableFeature(def features, Long tenant = null, String role = null, Date expires = null)+
+`void enableFeature(def features, Long tenant = null, String role = null, Date expires = null)`
 
 Enable a feature for a specific user role or for all roles in a tenant.
-The +features+ parameter can be a feature name or a collection of feature names.
-If no +tenant+ is specified then the current executing tenant will be used.
-If no +role+ is specified then the feature will be enabled for all roles in the tenant.
+The `features` parameter can be a feature name or a collection of feature names.
+If no `tenant` is specified then the current executing tenant will be used.
+If no `role` is specified then the feature will be enabled for all roles in the tenant.
 An expiration date can be specified. When the date has passed the feature will be disabled.
 This can be used to provide a *trial period* where a feature will be enabled for a limited period.
 
-+void disableFeature(def features, Long tenant = null, String role = null)+
+`void disableFeature(def features, Long tenant = null, String role = null)`
 
 Disable a feature for a specific user role or for all roles in a tenant.
-The +features+ parameter can be a feature name or a collection of feature names.
-If no +tenant+ is specified then the current executing tenant will be used.
-If no +role+ is specified then the feature will be disabled for all roles in the tenant.
+The `features` parameter can be a feature name or a collection of feature names.
+If no `tenant` is specified then the current executing tenant will be used.
+If no `role` is specified then the feature will be disabled for all roles in the tenant.
 
-+boolean hasFeature(final String feature, Long tenant = null, String role = null)+
+`boolean hasFeature(final String feature, Long tenant = null, String role = null)`
 
 Check if a feature is enabled.
-If no +tenant+ is specified then the current executing tenant will be used.
-If no +role+ is specified then it will check if the feature is enabled for all users in the tenant.
+If no `tenant` is specified then the current executing tenant will be used.
+If no `role` is specified then it will check if the feature is enabled for all users in the tenant.
 
-+List<Feature> getFeatures(Long tenant = null, String role = null)+
+`List<Feature> getFeatures(Long tenant = null, String role = null)`
 
 List all enabled features.
-If no +tenant+ is specified then features enabled in the current executing tenant will be returned.
-If no +role+ is specified then all features enabled in the tenant will be returned.
+If no `tenant` is specified then features enabled in the current executing tenant will be returned.
+If no `role` is specified then all features enabled in the tenant will be returned.
 
 == Tag Libraries
 
-The +crm-feature+ plugin provides a few GSP tags under the +crm+ namespace.
+The `crm-feature` plugin provides a few GSP tags under the `crm` namespace.
 
 === featureLink
 
@@ -295,11 +299,11 @@ The application is the container that knows about all installed plugins and you 
 in application code, but you should avoid checking for features in plugin code. Use events instead.
 ====
 
-
 == Changes
 
 2.4.0:: First version compatible with Grails 2.4.4.
-2.0.0:: First public release.
+2.0.1:: A feature can now be tied to a theme. Only tenants with that theme will have access to the feature
+2.0.0:: First public release
 
 == License
 
@@ -307,7 +311,7 @@ This plugin is licensed with http://www.apache.org/licenses/LICENSE-2.0.html[Apa
 
 == Source Code
 
-The source code for this plugin is available at {gr8source}
+The source code for this plugin is available at https://github.com/goeh/grails-crm-core
 
 == Contributing
 

@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class Feature {
     String plugin
+    String theme
     String name
     String description
     Map<String, Object> linkParams
@@ -57,6 +58,9 @@ class Feature {
         if(plugin) {
             s << " plugin=$plugin"
         }
+        if(theme) {
+            s << " theme=$theme"
+        }
         s << " description=\"$description\"".toString()
         s << " linkParams=$linkParams".toString()
         s << " role[$role]".toString()
@@ -76,6 +80,7 @@ class Feature {
 
         Feature feature = (Feature) o;
 
+        if (theme != feature.theme) return false;
         if (name != feature.name) return false;
         if (role != feature.role) return false;
         if (tenant != feature.tenant) return false;
@@ -86,6 +91,7 @@ class Feature {
     @Override
     int hashCode() {
         int result;
+        result = (theme != null ? theme.hashCode() : 0);
         result = (name != null ? name.hashCode() : 0);
         result = 31 * result + (role != null ? role.hashCode() : 0);
         result = 31 * result + (tenant != null ? tenant.hashCode() : 0);

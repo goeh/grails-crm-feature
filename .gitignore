@@ -9,6 +9,7 @@ target
 
 # Ignore packaged plugins
 *.zip
+*.zip.sha1
 
 stacktrace.log
 plugin.xml

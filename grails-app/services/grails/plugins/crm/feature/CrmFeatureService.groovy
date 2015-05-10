@@ -148,6 +148,7 @@ class CrmFeatureService {
         f.permissions = a.permissions
         f.hidden = a.hidden
         f.required = a.required
+        f.theme = a.theme
         return f
     }
 
