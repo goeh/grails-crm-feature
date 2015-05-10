@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Goran Ehrsson.
+ * Copyright (c) 2015 Goran Ehrsson.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 class CrmFeatureGrailsPlugin {
     def groupId = ""
-    def version = "2.0.1-SNAPSHOT"
+    def version = "2.0.1"
     def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmCore']
@@ -25,7 +25,7 @@ class CrmFeatureGrailsPlugin {
     def author = "Goran Ehrsson"
     def authorEmail = "goran@technipelago.se"
     def description = '''\
-This plugin manages installed "features" in GR8 CRM.
+This plugin manages installed "features" in GR8 CRM applications.
 A feature is a unit of functionality that can be enabled or disabled per user role.
 '''
     def documentation = "http://gr8crm.github.io/plugins/crm-feature/"
