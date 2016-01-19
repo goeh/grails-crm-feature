@@ -261,12 +261,12 @@ class CrmFeatureService {
      * @return true if the feature is enabled
      */
     @CompileStatic
-    boolean hasFeature(final String feature, Long tenant = null, String role = null) {
+    boolean hasFeature(final String feature, Long tenant = TenantUtils.tenant, String role = null) {
         final Cache cache = grailsCacheManager.getCache(CRM_FEATURE_CACHE)
         final String key = "$feature#${tenant ?: 0}/$role".toString()
         Boolean has = cache.get(key)?.get()
         if(has == null) {
-            println "Cache miss for feature $feature"
+            log.debug "Cache miss for feature $feature"
             has = (getFeatures(tenant, role).find {Feature f -> f.name == feature} != null)
             cache.put(key, has)
         }

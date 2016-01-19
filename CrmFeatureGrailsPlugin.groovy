@@ -16,12 +16,12 @@
 
 class CrmFeatureGrailsPlugin {
     def groupId = ""
-    def version = "2.4.1"
+    def version = "2.4.2"
     def grailsVersion = "2.2 > *"
     def dependsOn = [:]
     def loadAfter = ['crmCore']
     def pluginExcludes = ["grails-app/views/error.gsp"]
-    def title = "Manage installed features in GR8 CRM"
+    def title = "Manage installed features in GR8 CRM applications"
     def author = "Goran Ehrsson"
     def authorEmail = "goran@technipelago.se"
     def description = '''\
