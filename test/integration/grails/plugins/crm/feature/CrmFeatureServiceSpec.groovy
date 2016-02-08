@@ -221,6 +221,7 @@ class CrmFeatureServiceSpec extends grails.test.spock.IntegrationSpec {
 
         then:
         crmFeatureService.getFeature("mandatory").required
+        crmFeatureService.hasFeature("mandatory")
     }
 
     def "listen to enableFeature events"() {
