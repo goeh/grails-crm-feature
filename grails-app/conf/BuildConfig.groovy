@@ -35,11 +35,11 @@ grails.project.dependency.resolution = {
             export = false
         }
 
-        test(":codenarc:0.24.1") { export = false }
+        test(":codenarc:0.25.2") { export = false }
         test(":code-coverage:2.0.3-3") { export = false }
 
         compile ":cache:1.1.8"
-        compile ":crm-core:2.4.2"
+        compile ":crm-core:2.4.3"
     }
 }
 
