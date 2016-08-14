@@ -184,8 +184,10 @@ class CrmFeatureServiceSpec extends grails.test.spock.IntegrationSpec {
         then:
         crmFeatureService.hasFeature("test") == true
         crmFeatureService.hasFeature("awesome") == true
+        crmFeatureService.isEnabled("awesome") == true
         crmFeatureService.hasFeature("admin") == false
         crmFeatureService.hasFeature("admin", null, "admin") == true
+        crmFeatureService.isEnabled("admin", null, "admin") == true
     }
 
     def "feature expiration"() {

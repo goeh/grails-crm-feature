@@ -195,9 +195,9 @@ class CrmFeatureService {
                 }
             } else {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expires).save(failOnError: true)
+                event(for: f, topic: 'enableFeature', data: [feature: f, tenant: tenant, role: role, expires: expires], fork: false)
                 log.debug("Feature [$f] enabled for role [$role] and tenant [$tenant] expires [${expires ?: 'never'}]")
             }
-            event(for: f, topic: 'enableFeature', data: [feature: f, tenant: tenant, role:role, expires:expires], fork:false)
         }
         clearCache()
     }
@@ -243,11 +243,11 @@ class CrmFeatureService {
                 for (r in result) {
                     r.expires = expired
                 }
+                event(for: f, topic: 'disableFeature', data: [feature: f, tenant: tenant, role: role], fork: false)
             } else {
                 new CrmFeature(tenantId: tenant, role: role, name: f, expires: expired).save(failOnError: true)
             }
             log.debug("Feature [$f] disabled for role [$role] and tenant [$tenant]")
-            event(for: f, topic: 'disableFeature', data: [feature: f, tenant: tenant, role:role], fork:false)
         }
         clearCache()
     }
@@ -271,6 +271,40 @@ class CrmFeatureService {
             cache.put(key, has)
         }
         return has
+    }
+
+    boolean isEnabled(def feature, Long tenant = null, String role = null) {
+        String featureName = (feature instanceof Feature) ? feature.name : feature.toString()
+        CrmFeature.createCriteria().count() {
+            eq('name', featureName)
+            if (role != null) {
+                or {
+                    eq('role', role)
+                    isNull('role')
+                }
+            } else {
+                isNull('role')
+            }
+            if (tenant != null) {
+                or {
+                    isNull('tenantId')
+                    eq('tenantId', tenant)
+                }
+            } else {
+                isNull('tenantId')
+            }
+            or {
+                isNull('expires')
+                gt('expires', new Date())
+            }
+            cache true
+        }
+    }
+
+    List<Feature> enableRequiredFeatures(Long tenant = null) {
+        List<Feature> requiredFeatures = getApplicationFeatures().findAll { it.isRequired() }
+        enableFeature(requiredFeatures*.name, tenant)
+        return requiredFeatures
     }
 
     @CompileStatic
