@@ -301,6 +301,7 @@ in application code, but you should avoid checking for features in plugin code. 
 
 == Changes
 
+2.4.3:: The enableFeature event is only sent when the feature was not previously enabled
 2.4.2:: The method `hasFeature(String name, Long tenant, String role)` now uses the current tenant if no tenant is specified
 2.4.1:: A feature can now be tied to a theme. Only tenants with that theme will have access to the feature
 2.4.0:: First version compatible with Grails 2.4.4.
